@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, ReferenceLine } from "recharts";
-import { Home, PlugZap, Leaf, AlertTriangle, Lightbulb } from "lucide-react";
+import { PlugZap, Leaf } from "lucide-react";
 import BatteryGauge from './components/BatteryGauge'
 import MonthCalendar from './components/MonthCalendar'
 
@@ -14,15 +14,12 @@ export default function App() {
   const [meta, setMeta] = useState(18.0);
   const [percentShift, setPercentShift] = useState<number>(20);
   const [metaHistory, setMetaHistory] = useState<Array<{date:string, meta:number}>>([]);
+  // small tips list (kept for future expansion)
   const tips = [
     'Use o ferro de passar uma vez por semana.',
     'Desligue o carregador da tomada quando não estiver em uso.',
     'Agrupe roupas para lavar em uma única carga completa.',
-    'Prefira banho mais curto e feche o registro durante o shampoo.',
-    'Aproveite programas eco/eco wash na máquina de lavar.',
-    'Use LED e apague as luzes em cômodos vazios.',
   ];
-  const [tipIndex, setTipIndex] = useState<number>(()=> Math.floor(Math.random()*tips.length));
 
   // initial sample data (kept for demo)
   const initialDaily = [
@@ -169,11 +166,13 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 app-bg relative">
-      <div className="max-w-5xl mx-auto space-y-8">
-        <header className="flex flex-col items-center gap-4">
-          <div className="flex items-center gap-3">
-            <Home className="w-6 h-6 text-blue-600"/>
-            <h1 className="text-2xl font-semibold">MVP – Consumo Consciente (Residência)</h1>
+      <div className="max-w-6xl mx-auto space-y-8">
+        <header className="flex flex-col items-start gap-4">
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3">
+              <h1 className="serif-heading">MVP – Consumo Consciente (Residência)</h1>
+            </div>
+            <div className="text-2xl text-gray-500">☰</div>
           </div>
 
           {/* prominent meta gauge centered */}
@@ -199,6 +198,23 @@ export default function App() {
           </div>
         </header>
 
+        {/* Alert banner */}
+        {acimaMeta && (
+          <div className="alert-banner rounded-md p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="font-semibold text-red-700">⚠️ Consumo atual: {mediaAtual} kWh/dia</div>
+                <div className="text-sm text-red-600">Meta: {meta} kWh/dia</div>
+              </div>
+              <div className="w-1/2">
+                <div className="progress-track mt-2">
+                  <div className="progress-fill" style={{ width: `${Math.min(100, Math.round((mediaAtual/meta)*100))}%` }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Tab bar */}
         <div className="bg-white rounded-lg p-2 flex gap-2">
           {tabs.map(t=> (
@@ -210,142 +226,118 @@ export default function App() {
 
         {/* Tab panels */}
         <div>
-          {activeTab === 'meta' && (
-            <div className="space-y-4">
-              {acimaMeta && (
-                <Card>
-                  <CardTitle><span className="text-red-600">🔔 Alertas e Dicas rápidas</span></CardTitle>
-                  <div className="flex gap-3">
-                    <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5"/>
-                    <div>
-                      <div className="font-medium text-red-700">Alerta: acima da meta diária</div>
-                      <div className="text-sm text-red-700">Consumo médio atual ≈ <b>{mediaAtual} kWh/dia</b>. Meta: <b>{meta} kWh/dia</b>.</div>
-                      <div className="mt-3 text-sm bg-red-50 p-2 rounded">
-                        <div className="font-semibold">Dica rápida</div>
-                        <div className="text-sm text-gray-700">{tips[tipIndex]}</div>
-                        <div className="mt-2">
-                          <button className="text-xs inline-flex items-center gap-1 bg-gray-100 px-2 py-1 rounded" onClick={()=> setTipIndex((tipIndex+1)%tips.length)}>
-                            <Lightbulb className="w-4 h-4 text-yellow-500"/> <span>Próxima dica</span>
-                          </button>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-4">
+              {activeTab === 'meta' && (
+                <>
+                  <Card>
+                    <CardTitle>Meta diária e recomendações</CardTitle>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="col-span-1 md:col-span-2 space-y-4">
+                        <label className="text-sm text-gray-600">Meta (kWh/dia)</label>
+                        <input type="number" step="0.1" className="border rounded-lg p-2 w-32" value={meta} onChange={e=>setMeta(parseFloat(e.target.value||"0"))}/>
+                        <div className="mt-4">
+                          <label className="text-sm text-gray-600">Simulação: deslocar % do pico para o vale</label>
+                          <div className="flex items-center gap-3 mt-2">
+                            <input type="range" min={0} max={100} defaultValue={20} id="shift" onChange={(e)=>{ const v = parseInt((e.target as HTMLInputElement).value,10); setPercentShift(v); }} />
+                            <input type="number" min={0} max={100} value={percentShift} onChange={e=> setPercentShift(Math.max(0, Math.min(100, parseInt(e.target.value||'0',10))))} className="w-20 border rounded p-1 text-sm" />
+                            <div className="text-sm text-gray-700">%</div>
+                          </div>
+                          <div className="mt-3 text-sm text-gray-700">
+                            <div>Economia estimada por dia: <b>{dailyKwhSaved.toFixed(3)} kWh</b></div>
+                            <div>Economia estimada anual: <b>{annualSavingsBRL}</b></div>
+                          </div>
+
+                          {dailyKwhSaved > 0 && (
+                            <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded text-sm text-green-800 inline-block">
+                              Você economizaria <b>{monthlySavingsBRL}</b> por mês
+                            </div>
+                          )}
                         </div>
+                        <ul className="text-sm text-gray-700 space-y-1 mt-2">
+                          <li>• Adie máquina de lavar/ferro/forno para 21h–6h.</li>
+                          <li>• AC em 23–24°C, modo sleep, vedações ok.</li>
+                          <li>• Banhos curtos; evite 18–20h.</li>
+                          <li>• Stand-by: desligue TV/PCs ociosos.</li>
+                          <li>• Iluminação LED e hábitos de apagar luzes.</li>
+                        </ul>
+                      </div>
+                      <div className={`rounded-xl p-4 ${mediaAtual <= meta ? 'bg-green-50' : 'bg-yellow-50'}`}>
+                        <div className="text-sm text-gray-600">Pico vs. Vale</div>
+                        <div className="text-xl font-semibold">Pico: {pico.hour} ({pico.kWh} kWh)</div>
+                        <div className="text-xl font-semibold">Vale: {vale.hour} ({vale.kWh} kWh)</div>
+                        <div className="mt-1 flex items-center gap-2 text-green-700">Desloque ~20% do pico para o vale.</div>
+                        <div className="mt-4"><button className="bg-emerald-700 text-white px-3 py-1 rounded" onClick={saveMetaForToday}>Salvar meta</button></div>
                       </div>
                     </div>
-                  </div>
-                </Card>
+                  </Card>
+                </>
               )}
 
-              <Card>
-                <CardTitle><div className="flex items-center gap-2 text-blue-600"><PlugZap className="w-5 h-5"/>Meta diária e recomendações</div></CardTitle>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="col-span-1 md:col-span-2 space-y-4">
-                    <label className="text-sm text-gray-600">Meta (kWh/dia)</label>
-                    <input type="number" step="0.1" className="border rounded-lg p-2 w-32" value={meta} onChange={e=>setMeta(parseFloat(e.target.value||"0"))}/>
-                    <div className="mt-4">
-                      <label className="text-sm text-gray-600">Simulação: deslocar % do pico para o vale</label>
-                      <div className="flex items-center gap-3 mt-2">
-                        <input type="range" min={0} max={100} defaultValue={20} id="shift" onChange={(e)=>{ const v = parseInt((e.target as HTMLInputElement).value,10); setPercentShift(v); }} />
-                        <input type="number" min={0} max={100} value={percentShift} onChange={e=> setPercentShift(Math.max(0, Math.min(100, parseInt(e.target.value||'0',10))))} className="w-20 border rounded p-1 text-sm" />
-                        <div className="text-sm text-gray-700">%</div>
-                      </div>
-                      <div className="mt-3 text-sm text-gray-700">
-                        <div>Economia estimada por dia: <b>{dailyKwhSaved.toFixed(3)} kWh</b></div>
-                        <div>Economia estimada anual: <b>{annualSavingsBRL}</b></div>
-                      </div>
-
-                      {dailyKwhSaved > 0 && (
-                        <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded text-sm text-green-800 inline-block">
-                          Você economizaria <b>{monthlySavingsBRL}</b> por mês
-                        </div>
-                      )}
+              {activeTab === 'charts' && (
+                <>
+                  <Card>
+                    <CardTitle>Consumo médio diário</CardTitle>
+                    <div className="h-72">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={metasVsConsumption}>
+                          <CartesianGrid strokeDasharray="3 3"/>
+                          <XAxis dataKey="date"/>
+                          <YAxis/>
+                          <Tooltip/>
+                          <Legend/>
+                          <Line type="monotone" dataKey="consumo" name="Consumo médio diário (kWh)" stroke="#14532d" strokeWidth={2} dot={false}/>
+                          <Line type="monotone" dataKey="meta" name="Meta (kWh)" stroke="#16a34a" strokeWidth={2} dot={false}/>
+                        </LineChart>
+                      </ResponsiveContainer>
                     </div>
-                    <ul className="text-sm text-gray-700 space-y-1 mt-2">
-                      <li>• Adie máquina de lavar/ferro/forno para 21h–6h.</li>
-                      <li>• AC em 23–24°C, modo sleep, vedações ok.</li>
-                      <li>• Banhos curtos; evite 18–20h.</li>
-                      <li>• Stand-by: desligue TV/PCs ociosos.</li>
-                      <li>• Iluminação LED e hábitos de apagar luzes.</li>
-                    </ul>
-                  </div>
-                  <div className={`rounded-xl p-4 ${mediaAtual <= meta ? 'bg-green-50' : 'bg-yellow-50'}`}>
-                    <div className="text-sm text-gray-600">Pico vs. Vale</div>
-                    <div className="text-xl font-semibold">Pico: {pico.hour} ({pico.kWh} kWh)</div>
-                    <div className="text-xl font-semibold">Vale: {vale.hour} ({vale.kWh} kWh)</div>
-                    <div className="mt-1 flex items-center gap-2 text-green-700"><Leaf className="w-4 h-4"/>Desloque ~20% do pico para o vale.</div>
-                    <div className="mt-4"><button className="bg-teal-600 text-white px-3 py-1 rounded" onClick={saveMetaForToday}>Salvar meta para hoje</button></div>
-                  </div>
-                </div>
-              </Card>
-            </div>
-          )}
+                  </Card>
 
-          {activeTab === 'charts' && (
-            <div className="space-y-4">
+                  <Card>
+                    <CardTitle>Perfil horário</CardTitle>
+                    <div className="h-72">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={hourlyData}>
+                          <CartesianGrid strokeDasharray="3 3"/>
+                          <XAxis dataKey="hour"/>
+                          <YAxis/>
+                          <Tooltip/>
+                          <Legend/>
+                          <ReferenceLine x={"19h"} stroke="#16a34a" strokeDasharray="4 4" label="Pico"/>
+                          <ReferenceLine x={"4h"} stroke="#0ea5e9" strokeDasharray="4 4" label="Vale"/>
+                          <Bar dataKey="kWh" name="Consumo"/>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </Card>
+                </>
+              )}
+            </div>
+
+            <aside className="lg:col-span-1 space-y-4">
               <Card>
-                <CardTitle>📊 Gráficos e Histórico de Consumo</CardTitle>
-                <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={metasVsConsumption}>
-                      <CartesianGrid strokeDasharray="3 3"/>
-                      <XAxis dataKey="date"/>
-                      <YAxis/>
-                      <Tooltip/>
-                      <Legend/>
-                      <Line type="monotone" dataKey="consumo" name="Consumo médio diário (kWh)" stroke="#1e40af" strokeWidth={2} dot={false}/>
-                      <Line type="monotone" dataKey="meta" name="Meta (kWh)" stroke="#dc2626" strokeWidth={2} dot={false}/>
-                    </LineChart>
-                  </ResponsiveContainer>
+                <CardTitle>Perfil horário</CardTitle>
+                <div className="text-center">
+                  <div className="text-xl font-semibold">{mediaAtual} kWh/dia</div>
+                  <div className="text-sm text-gray-600">Meta: {meta} kWh/dia</div>
                 </div>
               </Card>
 
               <Card>
-                <CardTitle>Perfil médio horário</CardTitle>
-                <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={hourlyData}>
-                      <CartesianGrid strokeDasharray="3 3"/>
-                      <XAxis dataKey="hour"/>
-                      <YAxis/>
-                      <Tooltip/>
-                      <Legend/>
-                      <ReferenceLine x={"19h"} stroke="#16a34a" strokeDasharray="4 4" label="Pico"/>
-                      <ReferenceLine x={"4h"} stroke="#0ea5e9" strokeDasharray="4 4" label="Vale"/>
-                      <Bar dataKey="kWh" name="Consumo"/>
-                    </BarChart>
-                  </ResponsiveContainer>
+                <CardTitle>🏆 Selos</CardTitle>
+                <div className="flex flex-col gap-3 items-center">
+                  <div className={`p-3 rounded-lg border w-full text-center ${badges.bronze ? 'bg-yellow-50' : 'bg-gray-50'}`}>🥉 Economizador Bronze</div>
+                  <div className={`p-3 rounded-lg border w-full text-center ${badges.silver ? 'bg-slate-50' : 'bg-gray-50'}`}>🥈 Economizador Prata</div>
+                  <div className={`p-3 rounded-lg border w-full text-center ${badges.gold ? 'bg-amber-50' : 'bg-gray-50'}`}>🥇 Economizador Ouro</div>
                 </div>
               </Card>
-            </div>
-          )}
 
-          {activeTab === 'badges' && (
-            <Card>
-              <CardTitle>🏆 Gamificação (Selos)</CardTitle>
-              <div className="flex items-center gap-4">
-                <div className={`p-3 rounded-lg border ${badges.bronze ? 'bg-yellow-50' : 'bg-gray-50'}`}>
-                  <div className="text-xl">🥉</div>
-                  <div className="text-sm">Economizador Bronze</div>
-                  <div className="text-xs text-gray-500">7 dias dentro da meta</div>
-                </div>
-                <div className={`p-3 rounded-lg border ${badges.silver ? 'bg-slate-50' : 'bg-gray-50'}`}>
-                  <div className="text-xl">🥈</div>
-                  <div className="text-sm">Economizador Prata</div>
-                  <div className="text-xs text-gray-500">15 dias dentro da meta</div>
-                </div>
-                <div className={`p-3 rounded-lg border ${badges.gold ? 'bg-amber-50' : 'bg-gray-50'}`}>
-                  <div className="text-xl">🥇</div>
-                  <div className="text-sm">Economizador Ouro</div>
-                  <div className="text-xs text-gray-500">30 dias dentro da meta</div>
-                </div>
-              </div>
-            </Card>
-          )}
-
-          {activeTab === 'calendar' && (
-            <Card>
-              <CardTitle>📅 Calendário do Mês</CardTitle>
-              <MonthCalendar days={dailyData.filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(String(d.label))).map(d=>({date:String(d.label), consumo:d.kWh}))} meta={meta} />
-            </Card>
-          )}
+              <Card>
+                <CardTitle>Calendário</CardTitle>
+                <MonthCalendar days={dailyData.filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(String(d.label))).map(d=>({date:String(d.label), consumo:d.kWh}))} meta={meta} />
+              </Card>
+            </aside>
+          </div>
         </div>
 
         {/* Removed duplicated sections (charts, selos, calendar, series, hourly profile) — they live inside tabs now */}
