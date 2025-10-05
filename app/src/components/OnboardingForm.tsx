@@ -12,6 +12,11 @@ export type HabitosConsumo = {
   standby: "desliga" | "mantem";
   iluminação: "led" | "mista" | "fluor_incand";
   pico: "18-20" | "19-21" | "20-22" | "variavel";
+  ventilador: "nao" | "sim";
+  chuveiroEletrico: "sim" | "nao";
+  microondas: "sim" | "nao";
+  lavaLoucas: "sim" | "nao";
+  geladeiras: number;
 };
 
 type Props = {
@@ -31,6 +36,11 @@ export default function OnboardingForm({ onFinish }: Props) {
     standby: "mantem",
     iluminação: "mista",
     pico: "19-21",
+    ventilador: "sim",
+    chuveiroEletrico: "sim",
+    microondas: "sim",
+    lavaLoucas: "nao",
+    geladeiras: 1,
   });
 
   const sugestoes: string[] = useMemo(() => gerarSugestoes(h), [h]);
@@ -118,6 +128,51 @@ export default function OnboardingForm({ onFinish }: Props) {
           </Field>
         </div>
 
+        {/* Linha 3.5: novos eletrodomésticos */}
+        <div className="grid md:grid-cols-3 gap-4">
+          <Field label="Ventilador">
+            <select className="input" value={h.ventilador}
+              onChange={e => setH({ ...h, ventilador: e.target.value as HabitosConsumo["ventilador"] })}>
+              <option value="sim">Sim</option>
+              <option value="nao">Não</option>
+            </select>
+          </Field>
+
+          <Field label="Chuveiro elétrico (resistência)">
+            <select className="input" value={h.chuveiroEletrico}
+              onChange={e => setH({ ...h, chuveiroEletrico: e.target.value as HabitosConsumo["chuveiroEletrico"] })}>
+              <option value="sim">Sim</option>
+              <option value="nao">Não</option>
+            </select>
+          </Field>
+
+          <Field label="Micro-ondas">
+            <select className="input" value={h.microondas}
+              onChange={e => setH({ ...h, microondas: e.target.value as HabitosConsumo["microondas"] })}>
+              <option value="sim">Sim</option>
+              <option value="nao">Não</option>
+            </select>
+          </Field>
+        </div>
+
+        {/* Linha 4.5: mais eletros */}
+        <div className="grid md:grid-cols-3 gap-4">
+          <Field label="Lava-louças">
+            <select className="input" value={h.lavaLoucas}
+              onChange={e => setH({ ...h, lavaLoucas: e.target.value as HabitosConsumo["lavaLoucas"] })}>
+              <option value="sim">Sim</option>
+              <option value="nao">Não</option>
+            </select>
+          </Field>
+
+          <Field label="Quantidade de geladeiras">
+            <input type="number" min={0} className="input" value={h.geladeiras}
+              onChange={e => setH({ ...h, geladeiras: Number(e.target.value || 1) })}/>
+          </Field>
+
+          <div />
+        </div>
+
         {/* Linha 4 */}
         <div className="grid md:grid-cols-3 gap-4">
           <Field label="Iluminação predominante">
@@ -179,6 +234,11 @@ function gerarSugestoes(h: HabitosConsumo): string[] {
   if (h.usaFerro === 'semanal') out.push('Agrupe roupas para passar de uma só vez e evite passar peças pouco usadas.');
   if (h.maquinaLavarSemana >= 3) out.push('Use programas econômicos e lave com carga completa.');
   if (h.standby === 'mantem') out.push('Desconecte aparelhos em stand-by quando possível ou use régua com interruptor.');
+  if (h.ventilador === 'sim') out.push('Use ventiladores no lugar do AC quando possível — muito mais eficiente.');
+  if (h.chuveiroEletrico === 'sim') out.push('Chuveiros elétricos consomem muito — reduza duração e prefira temperaturas mais baixas.');
+  if (h.microondas === 'sim') out.push('Micro-ondas é eficiente para aquecer; prefira-o a forno elétrico quando possível.');
+  if (h.lavaLoucas === 'sim') out.push('Use o ciclo econômico da lava-louças e só rode com carga completa.');
+  if (h.geladeiras > 1) out.push('Avalie a necessidade de múltiplas geladeiras e mantenha as borrachas vedadas.');
   if (out.length === 0) out.push('Ótimo! Seus hábitos parecem razoáveis — verifique recomendações detalhadas no painel.');
   return out;
 }
