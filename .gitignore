@@ -1,0 +1,15 @@
+# Node
+node_modules/
+package-lock.json
+yarn.lock
+
+# VSCode
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log

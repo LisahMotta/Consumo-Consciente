@@ -1,0 +1,8 @@
+:root{--bg:#f7fff7;--card:#ffffff;--accent:#2a9d8f}
+*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+body{margin:0;background:var(--bg);color:#0b3a3a}
+.container{max-width:680px;margin:48px auto;padding:24px;background:var(--card);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
+#tracker input{padding:8px 10px;margin-right:8px}
+#tracker button{background:var(--accent);color:white;border:none;padding:8px 12px;border-radius:6px}
+#list{margin-top:12px;padding-left:18px}
+#list li{margin:6px 0}
