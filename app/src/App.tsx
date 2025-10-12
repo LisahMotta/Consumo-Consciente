@@ -296,8 +296,8 @@ export default function App() {
         <Container>
           <div className="flex items-start gap-4">
             <div className="flex-1">
-              <h1 className="serif-heading">MVP – Consumo Consciente</h1>
-              <div className="text-gray-600 mt-1">(Residência)</div>
+              <h1 className="serif-heading">Consumo Consciente</h1>
+              <div className="text-gray-600 mt-1 text-lg">Bem-vindo ao seu ajudante de economia de energia ⚡</div>
             </div>
             <div className="w-20 h-20 rounded-full bg-emerald-50 border border-emerald-100 grid place-items-center">
               <div className="text-3xl text-emerald-800">💡</div>

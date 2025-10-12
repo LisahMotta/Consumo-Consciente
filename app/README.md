@@ -1,4 +1,6 @@
-# 💡 MVP Consumo Consciente
+# 💡 Consumo Consciente
+
+**Bem-vindo ao seu ajudante de economia de energia!**
 
 Aplicativo web educacional para monitoramento e redução do consumo de energia elétrica residencial.
 
