@@ -1,4 +1,3 @@
-import React from 'react';
 import type { RegistroDiario } from './DailyUsageForm';
 import { EQUIPAMENTOS_PADRAO } from '../data/equipamentos';
 

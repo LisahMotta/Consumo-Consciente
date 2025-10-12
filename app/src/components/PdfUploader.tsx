@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Configurar worker do PDF.js usando o arquivo local
@@ -128,7 +128,6 @@ export default function PdfUploader({ onDataExtracted }: Props) {
  * Parser inteligente para extrair informações da conta de energia
  */
 function parsearContaEnergia(texto: string): DadosContaEnergia {
-  const textoLimpo = texto.toLowerCase();
   
   // Extrair consumo em kWh
   let consumoKwh = 0;
@@ -183,7 +182,7 @@ function parsearContaEnergia(texto: string): DadosContaEnergia {
   
   linhas.forEach(linha => {
     const linhaLimpa = linha.toLowerCase();
-    meses.forEach((mes, idx) => {
+    meses.forEach((mes) => {
       if (linhaLimpa.includes(mes)) {
         const numeros = linha.match(/(\d+[\.,]?\d*)/g);
         if (numeros && numeros.length > 0) {

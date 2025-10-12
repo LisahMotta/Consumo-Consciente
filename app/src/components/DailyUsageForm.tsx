@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { EQUIPAMENTOS_PADRAO, calcularConsumo, calcularCusto, type Equipamento } from '../data/equipamentos';
+import { useState, useEffect } from 'react';
+import { EQUIPAMENTOS_PADRAO, calcularConsumo, calcularCusto } from '../data/equipamentos';
 
 export type RegistroUso = {
   equipamentoId: string;
@@ -25,8 +25,6 @@ export default function DailyUsageForm({ onSave, registroExistente }: Props) {
   );
   const [categoriaFiltro, setCategoriaFiltro] = useState<string>('todos');
   const [registros, setRegistros] = useState<RegistroUso[]>(registroExistente?.registros || []);
-  const [equipamentoCustom, setEquipamentoCustom] = useState({ nome: '', potencia: 0 });
-  const [showCustomForm, setShowCustomForm] = useState(false);
   const [tarifaKwh, setTarifaKwh] = useState(0.8);
 
   const categorias = [

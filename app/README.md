@@ -68,6 +68,28 @@ npm run build
 npm run preview
 ```
 
+## 🚀 Deploy
+
+### Deploy no Render (Recomendado)
+
+1. Faça fork/clone deste repositório
+2. Crie uma conta gratuita no [Render](https://render.com)
+3. Conecte seu repositório GitHub
+4. Configure:
+   - **Build Command**: `cd app && npm install && npm run build`
+   - **Publish Directory**: `app/dist`
+5. Deploy automático a cada push!
+
+Veja o [Guia Completo de Deploy](../GUIA_DEPLOY_RENDER.md) para instruções detalhadas.
+
+### Deploy em outras plataformas
+
+O app também funciona em:
+- **Vercel**: Deploy automático, zero configuração
+- **Netlify**: Arraste a pasta `app/dist` após build
+- **GitHub Pages**: Configuração via GitHub Actions
+- **Firebase Hosting**: `firebase init` + `firebase deploy`
+
 ## 🎨 Estrutura do Projeto
 
 ```

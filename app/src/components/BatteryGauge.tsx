@@ -1,5 +1,3 @@
-import React from 'react'
-
 type Props = {
   percent: number // 0..100
   color?: string
