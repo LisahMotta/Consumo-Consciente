@@ -1,26 +1,30 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Roboto:wght@300;400;700&display=swap');
+/* === Fontes === */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@700&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Tailwind v4 */
+@import "tailwindcss";
 
-
-/* ==================== Tokens ==================== */
+/* === Tokens de design === */
 :root{
-  --app-font: 'Inter', 'Roboto', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  --app-font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial;
   --heading-font: 'Merriweather', Georgia, 'Times New Roman', serif;
+
   --accent-green: #14532d;
-  --bg-from: #f0fdfa;  /* verde bem claro */
-  --bg-to:   #ffffff;  /* branco */
+
+  --bg-from: #f0fdfa;   /* teal-50 */
+  --bg-to:   #ffffff;   /* white */
+
+  --card-bg: #ffffff;
+  --card-border: #eef2f2;  /* cinza muito claro */
+  --shadow: 0 1px 2px rgba(0,0,0,.06), 0 8px 24px rgba(2, 44, 34, .05);
 }
 
 html, body, #root { height: 100%; }
 html { font-size: 16px; }
 body {
   font-family: var(--app-font);
-  font-size: 1rem;
-  /* Fundo clean como no mockup */
+  color: #0f172a; /* slate-900 */
   background: linear-gradient(to bottom right, var(--bg-from), var(--bg-to));
 }
 
@@ -28,47 +32,70 @@ body {
 h1, .serif-heading { font-family: var(--heading-font); color: var(--accent-green); }
 .serif-heading { font-size: 2.25rem; line-height: 1.05; }
 
-/* Espaçamento e utilitários */
-.section-gap { margin-top: 1.5rem; margin-bottom: 1.5rem; }
-.card-responsive { width: 100%; }
+/* ====== Utilitários de layout ====== */
+.app-bg { position: relative; }
 
-/* ==================== Container de fundo ==================== */
-/* Deixe o container principal com leve gradiente (sem imagem e sem overlay que "apaga" a tela) */
-.app-bg {
-  position: relative;            /* garante contexto pro ::after se usar */
-  background: transparent;       /* o body já tem o gradiente */
+/* Cartões coerentes com o mockup */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 1rem;          /* rounded-2xl */
+  box-shadow: var(--shadow);
+}
+.card-body { padding: 1rem; }    /* p-4 */
+@media (min-width: 768px) {
+  .card-body { padding: 1.5rem; } /* md:p-6 */
 }
 
-/* Se quiser um véu sutil (quase imperceptível), mantenha o ::after bem levinho e atrás do conteúdo.
-   Pode até remover todo este bloco se preferir 100% transparente. */
-.app-bg::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;                    /* fica ATRÁS do conteúdo */
-  background: linear-gradient(180deg, rgba(255,255,255,0.0), rgba(255,255,255,0.07));
-  pointer-events: none;
+/* Grid usado na seção de meta (3 colunas no desktop) */
+.layout-grid {
+  display: grid;
+  gap: 1.5rem;
 }
-/* Garante que o conteúdo fique acima do ::after */
-.app-bg > * { position: relative; z-index: 1; }
+@media (min-width: 768px) {
+  .layout-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 
-/* ==================== Banner de alerta ==================== */
+/* Banner de alerta (acima da meta) */
 .alert-banner {
-  background: rgba(254,226,226,0.9);
-  border: 1px solid rgba(252,165,165,0.6);
+  background: rgba(254,226,226,0.95); /* red-100 */
+  border: 1px solid rgba(252,165,165,0.7); /* red-300 */
+  border-radius: 0.75rem;
 }
-.progress-track { background: rgba(254,226,226,0.5); border-radius: 9999px; height: 12px; }
-.progress-fill  { background: linear-gradient(90deg,#ef4444,#fb7185); height: 12px; border-radius: 9999px; }
+.progress-track {
+  background: rgba(254,226,226,0.6);
+  border-radius: 9999px;
+  height: 12px;
+}
+.progress-fill  {
+  background: linear-gradient(90deg,#ef4444,#fb7185); /* red-500 -> rose-400 */
+  height: 12px;
+  border-radius: 9999px;
+}
 
-/* ==================== Inputs ==================== */
+/* ====== Tudo que usa @apply precisa estar dentro de um @layer ====== */
+/* Component styles (explicit CSS instead of @apply to avoid PostCSS @apply resolution issues) */
 .input {
   width: 100%;
-  border-radius: 0.75rem; /* approx. rounded-xl */
+  border-radius: 0.75rem; /* rounded-xl */
   border: 1px solid rgba(209,213,219,1); /* gray-300 */
   padding: 0.5rem 0.75rem; /* px-3 py-2 */
   box-sizing: border-box;
 }
 .input:focus {
   outline: none;
-  box-shadow: 0 0 0 4px rgba(16,185,129,0.12); /* mimic focus ring-emerald-300 */
+  box-shadow: 0 0 0 4px rgba(16,185,129,0.12); /* focus ring emerald */
 }
+
+.tab-btn {
+  padding: 0.375rem 0.75rem; /* py-1.5 px-3 */
+  border-radius: 9999px;
+  border: 1px solid rgba(226,232,240,1);
+  background: #ffffff;
+  color: #0f172a;
+}
+.tab-btn:hover { background: #f8fafc; }
+.tab-btn--active { background: #16a34a; color: #ffffff; border-color: #16a34a; }
+
+/* Acessibilidade leve */
+:focus-visible { outline: 2px solid #10b981; outline-offset: 2px; }

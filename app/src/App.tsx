@@ -1,3 +1,4 @@
+// src/App.tsx
 import React, { useMemo, useState, useEffect } from "react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -7,59 +8,16 @@ import BatteryGauge from "./components/BatteryGauge";
 import MonthCalendar from "./components/MonthCalendar";
 import OnboardingForm from "./components/OnboardingForm";
 import type { HabitosConsumo } from "./components/OnboardingForm";
-
-/* ===== Helpers de UI (sem shadcn) ===== */
-function Container({ children }: { children: React.ReactNode }) {
-  return <div className="max-w-6xl mx-auto px-4 md:px-6">{children}</div>;
-}
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="space-y-4">
-      <h2 className="text-xl md:text-2xl font-semibold text-gray-800">{title}</h2>
-      {children}
-    </section>
-  );
-}
-function Card({ children }: { children: React.ReactNode }) {
-  return <div className="bg-white rounded-2xl shadow-sm border border-gray-100">{children}</div>;
-}
-function CardBody({ children }: { children: React.ReactNode }) {
-  return <div className="p-4 md:p-6">{children}</div>;
-}
-function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      {...props}
-      className={
-        "w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300 " +
-        (props.className || "")
-      }
-    />
-  );
-}
-function Badge({ children, color = "emerald" }:
-  { children: React.ReactNode; color?: "emerald" | "red" | "gray" }) {
-  const map: any = {
-    emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    red: "bg-red-50 text-red-700 border-red-200",
-    gray: "bg-gray-50 text-gray-700 border-gray-200",
-  };
-  return (
-    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs border ${map[color]}`}>
-      {children}
-    </span>
-  );
-}
-/* ===================================== */
+import { Container, Section, Card, CardBody, Input, Badge } from "./ui";
 
 export default function App() {
   /* ===== Estado principal ===== */
-  const [meta, setMeta] = useState(18.0);
+  const [meta, setMeta] = useState<number>(18.0);
   const [percentShift, setPercentShift] = useState<number>(20);
   const [metaHistory, setMetaHistory] = useState<Array<{ date: string; meta: number }>>([]);
   const [badges, setBadges] = useState({ bronze: false, silver: false, gold: false });
   const [activeTab, setActiveTab] = useState<"meta" | "charts" | "badges" | "calendar">("meta");
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
 
   // dicas rápidas
   const dicas = [
@@ -92,8 +50,14 @@ export default function App() {
   const mediaAtual = dailyData.at(-1)?.kWh ?? 0;
   const acimaMeta = mediaAtual > meta;
 
-  const pico = hourlyData.reduce((a, b) => (b.kWh > a.kWh ? b : a), hourlyData[0]);
-  const vale = hourlyData.reduce((a, b) => (b.kWh < a.kWh ? b : a), hourlyData[0]);
+  const pico = useMemo(
+    () => hourlyData.reduce((a, b) => (b.kWh > a.kWh ? b : a), hourlyData[0]),
+    [hourlyData]
+  );
+  const vale = useMemo(
+    () => hourlyData.reduce((a, b) => (b.kWh < a.kWh ? b : a), hourlyData[0]),
+    [hourlyData]
+  );
 
   const pricePerKwh = 0.8; // R$
   const dailyKwhSaved = (pico.kWh - vale.kWh) * (percentShift / 100);
@@ -144,9 +108,10 @@ export default function App() {
       } else if (/^\d{2}-\d{2}-\d{4}$/.test(rawDate)) {
         const [d, m, y] = rawDate.split("-");
         isoDate = `${y}-${m}-${d}`;
+      } else if (!/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
+        // se não reconheceu a data, pula
+        continue;
       }
-
-      if (!isoDate) continue;
 
       dailyMap[isoDate] = (dailyMap[isoDate] || 0) + kwh;
 
@@ -184,14 +149,15 @@ export default function App() {
     localStorage.setItem("metaHistory", JSON.stringify(next));
   };
 
-  /* ===== Carregar/salvar badges ===== */
+  /* ===== Carregar/salvar badges e onboarding ===== */
   useEffect(() => {
-    const raw = localStorage.getItem("metaHistory");
-    if (raw) setMetaHistory(JSON.parse(raw));
-    const braw = localStorage.getItem("badges");
-    if (braw) setBadges(JSON.parse(braw));
-    // if no metaHistory found, show onboarding once
-    if (!raw) setShowOnboarding(true);
+    try {
+      const raw = localStorage.getItem("metaHistory");
+      if (raw) setMetaHistory(JSON.parse(raw));
+      const braw = localStorage.getItem("badges");
+      if (braw) setBadges(JSON.parse(braw));
+      if (!raw) setShowOnboarding(true);
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -202,57 +168,55 @@ export default function App() {
       gold: daysWithinMeta >= 30,
     };
     setBadges(newBadges);
-    localStorage.setItem("badges", JSON.stringify(newBadges));
+    try { localStorage.setItem("badges", JSON.stringify(newBadges)); } catch {}
   }, [dailyData, meta]);
 
   /* ===== Render ===== */
   return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(to bottom right,#f0fdfa,#ffffff)" }}>
+    <div className="min-h-screen app-bg">
       {/* HEADER */}
-      <div className="border-b border-emerald-100/60 bg-white/70 backdrop-blur">
+      <div className="pt-6 pb-4">
         <Container>
-          <div className="py-4 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white grid place-items-center text-lg">💡</div>
-            <h1 className="text-2xl md:text-3xl font-semibold text-emerald-900">
-              MVP – Consumo Consciente <span className="text-gray-500 text-xl">(Residência)</span>
-            </h1>
-            <div className="ml-auto">
-              <Badge color="gray">Protótipo</Badge>
+          <div className="flex items-start gap-4">
+            <div className="flex-1">
+              <h1 className="serif-heading">MVP – Consumo Consciente</h1>
+              <div className="text-gray-600 mt-1">(Residência)</div>
+            </div>
+            <div className="w-20 h-20 rounded-full bg-emerald-50 border border-emerald-100 grid place-items-center">
+              <div className="text-3xl text-emerald-800">💡</div>
             </div>
           </div>
         </Container>
       </div>
 
-      {/* BARRA DE ALERTA */}
+      {/* BANNER DE ALERTA */}
       {acimaMeta && (
-        <div className="bg-red-50/80 border-y border-red-100">
-          <Container>
-            <div className="py-2 text-sm text-red-700 flex items-center gap-2">
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-500" />
-              <b>Acima da meta</b>
-              <span className="opacity-80">• Consumo atual: {mediaAtual} kWh/dia • Meta: {meta} kWh/dia</span>
-              <div className="ml-auto w-64 h-2 rounded-full bg-red-100 overflow-hidden">
-                <div
-                  className="h-full bg-red-400"
-                  style={{ width: Math.min(100, (mediaAtual / meta) * 100) + "%" }}
-                />
+        <Container>
+          <div className="alert-banner rounded-xl border p-4 mt-2 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="text-red-700 font-semibold">⚠️ Consumo atual: {mediaAtual} kWh/dia</div>
+              <div className="text-sm text-red-700 opacity-90">Meta: {meta} kWh/dia</div>
+              <div className="ml-auto w-2/5">
+                <div className="progress-track">
+                  <div className="progress-fill" style={{ width: Math.min(100, (mediaAtual / meta) * 100) + "%" }} />
+                </div>
               </div>
             </div>
-          </Container>
-        </div>
+          </div>
+        </Container>
       )}
 
       {/* CONTEÚDO */}
       <Container>
-        <div className="py-6 space-y-8">
+        <div className="py-6">
           {/* topo com gauge e upload */}
           <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
             <div className="text-center">
               {(() => {
                 const pct = mediaAtual && meta ? Math.round((meta / Math.max(0.0001, mediaAtual)) * 100) : 0;
-                let color = "#10B981"; // dentro da meta
-                if (mediaAtual > meta * 1.05) color = "#ef4444"; // acima
-                else if (Math.abs(mediaAtual - meta) / Math.max(meta, 1) <= 0.05) color = "#3b82f6"; // próximo
+                let color = "#10B981";
+                if (mediaAtual > meta * 1.05) color = "#ef4444";
+                else if (Math.abs(mediaAtual - meta) / Math.max(meta, 1) <= 0.05) color = "#3b82f6";
                 return (
                   <div className="inline-block p-2 rounded-xl bg-white shadow">
                     <BatteryGauge
@@ -280,7 +244,7 @@ export default function App() {
           </div>
 
           {/* Abas simples */}
-          <div className="bg-white rounded-lg p-2 flex gap-2">
+          <div className="bg-white rounded-lg p-2 flex gap-2 mt-6">
             <button
               onClick={() => setActiveTab("meta")}
               className={`px-3 py-1.5 rounded-full border ${activeTab === "meta"
@@ -341,10 +305,14 @@ export default function App() {
                             max={100}
                             step={5}
                             value={percentShift}
-                            onChange={(e) => setPercentShift(Math.max(0, Math.min(100, Number(e.target.value || 0))))}
+                            onChange={(e) =>
+                              setPercentShift(Math.max(0, Math.min(100, Number(e.target.value || 0))))
+                            }
                             className="w-24"
                           />
-                          <Badge>Economia/dia ≈ {( (pico.kWh - vale.kWh) * (percentShift / 100) ).toFixed(2)} kWh</Badge>
+                          <Badge>
+                            Economia/dia ≈ {((pico.kWh - vale.kWh) * (percentShift / 100)).toFixed(2)} kWh
+                          </Badge>
                         </div>
                         <div className="text-emerald-700 mt-1">
                           Economia mensal estimada: <b>{monthlySavingsBRL}</b>
@@ -375,8 +343,12 @@ export default function App() {
                     {/* Coluna 3: pico x vale */}
                     <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
                       <div className="text-sm text-emerald-900">Pico vs. Vale</div>
-                      <div className="text-lg font-semibold">Pico: {pico.hour} ({pico.kWh} kWh)</div>
-                      <div className="text-lg font-semibold">Vale: {vale.hour} ({vale.kWh} kWh)</div>
+                      <div className="text-lg font-semibold">
+                        Pico: {pico.hour} ({pico.kWh} kWh)
+                      </div>
+                      <div className="text-lg font-semibold">
+                        Vale: {vale.hour} ({vale.kWh} kWh)
+                      </div>
                       <div className="mt-2 text-emerald-800 text-sm">
                         Desloque ~{percentShift}% do uso do pico para o vale.
                       </div>
@@ -399,8 +371,22 @@ export default function App() {
                         <YAxis />
                         <Tooltip />
                         <Legend />
-                        <Line type="monotone" dataKey="consumo" name="Consumo médio diário (kWh)" stroke="#14532d" strokeWidth={2} dot={false} />
-                        <Line type="monotone" dataKey="meta" name="Meta (kWh)" stroke="#16a34a" strokeWidth={2} dot={false} />
+                        <Line
+                          type="monotone"
+                          dataKey="consumo"
+                          name="Consumo médio diário (kWh)"
+                          stroke="#14532d"
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="meta"
+                          name="Meta (kWh)"
+                          stroke="#16a34a"
+                          strokeWidth={2}
+                          dot={false}
+                        />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
@@ -483,7 +469,7 @@ export default function App() {
           <div className="w-full max-w-3xl">
             <OnboardingForm
               onFinish={(habitos: HabitosConsumo) => {
-                // apply a simple heuristic: lower the meta slightly if suggested
+                // Exemplo simples: ajusta ligeiramente a meta com base em hábitos
                 if (habitos && habitos.banhoMin) {
                   const suggested = Math.max(12, Math.round(mediaAtual - 1));
                   setMeta(suggested);
