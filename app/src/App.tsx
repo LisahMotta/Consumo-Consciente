@@ -8,8 +8,11 @@ import BatteryGauge from "./components/BatteryGauge";
 import MonthCalendar from "./components/MonthCalendar";
 import OnboardingForm from "./components/OnboardingForm";
 import PdfUploader from "./components/PdfUploader";
+import DailyUsageForm from "./components/DailyUsageForm";
+import DailyUsageHistory from "./components/DailyUsageHistory";
 import type { HabitosConsumo } from "./components/OnboardingForm";
 import type { DadosContaEnergia } from "./components/PdfUploader";
+import type { RegistroDiario } from "./components/DailyUsageForm";
 import { Container, Section, Card, CardBody, Input, Badge } from "./ui";
 
 export default function App() {
@@ -18,9 +21,11 @@ export default function App() {
   const [percentShift, setPercentShift] = useState<number>(20);
   const [metaHistory, setMetaHistory] = useState<Array<{ date: string; meta: number }>>([]);
   const [badges, setBadges] = useState({ bronze: false, silver: false, gold: false });
-  const [activeTab, setActiveTab] = useState<"meta" | "charts" | "badges" | "calendar" | "pdf">("meta");
+  const [activeTab, setActiveTab] = useState<"meta" | "charts" | "badges" | "calendar" | "pdf" | "daily">("meta");
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
   const [dicasPdf, setDicasPdf] = useState<string[]>([]);
+  const [registrosDiarios, setRegistrosDiarios] = useState<RegistroDiario[]>([]);
+  const [registroEditando, setRegistroEditando] = useState<RegistroDiario | undefined>(undefined);
 
   // dicas rápidas
   const dicas = [
@@ -190,6 +195,66 @@ export default function App() {
     localStorage.setItem("metaHistory", JSON.stringify(next));
   };
 
+  /* ===== Handlers para registros diários ===== */
+  const handleSaveRegistroDiario = (registro: RegistroDiario) => {
+    try {
+      // Remove registro existente para a mesma data e adiciona o novo
+      const novosRegistros = [
+        ...registrosDiarios.filter(r => r.data !== registro.data),
+        registro
+      ].sort((a, b) => a.data.localeCompare(b.data));
+
+      setRegistrosDiarios(novosRegistros);
+      localStorage.setItem('registrosDiarios', JSON.stringify(novosRegistros));
+
+      // Atualizar gráfico com dados dos registros
+      atualizarGraficosComRegistros(novosRegistros);
+
+      // Limpar registro em edição
+      setRegistroEditando(undefined);
+
+      // Mostrar mensagem de sucesso (opcional)
+      alert('✅ Registro salvo com sucesso!');
+    } catch (err) {
+      console.error('Erro ao salvar registro:', err);
+      alert('❌ Erro ao salvar registro. Tente novamente.');
+    }
+  };
+
+  const handleDeleteRegistro = (data: string) => {
+    try {
+      const novosRegistros = registrosDiarios.filter(r => r.data !== data);
+      setRegistrosDiarios(novosRegistros);
+      localStorage.setItem('registrosDiarios', JSON.stringify(novosRegistros));
+      atualizarGraficosComRegistros(novosRegistros);
+    } catch (err) {
+      console.error('Erro ao excluir registro:', err);
+    }
+  };
+
+  const handleEditRegistro = (registro: RegistroDiario) => {
+    setRegistroEditando(registro);
+    setActiveTab('daily');
+    // Scroll para o topo
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const atualizarGraficosComRegistros = (registros: RegistroDiario[]) => {
+    if (registros.length === 0) return;
+
+    // Criar dados diários a partir dos registros
+    const dadosDiarios = registros.map(r => ({
+      label: r.data,
+      kWh: r.consumoTotal
+    }));
+
+    setDailyData(dadosDiarios);
+
+    // Atualizar meta baseada na média
+    const mediaConsumo = registros.reduce((acc, r) => acc + r.consumoTotal, 0) / registros.length;
+    setMeta(Math.max(mediaConsumo * 0.9, mediaConsumo - 2));
+  };
+
   /* ===== Carregar/salvar badges e onboarding ===== */
   useEffect(() => {
     try {
@@ -201,6 +266,12 @@ export default function App() {
       if (pdfRaw) {
         const dados: DadosContaEnergia = JSON.parse(pdfRaw);
         setDicasPdf(dados.dicas || []);
+      }
+      const registrosRaw = localStorage.getItem("registrosDiarios");
+      if (registrosRaw) {
+        const registros: RegistroDiario[] = JSON.parse(registrosRaw);
+        setRegistrosDiarios(registros);
+        atualizarGraficosComRegistros(registros);
       }
       if (!raw) setShowOnboarding(true);
     } catch {}
@@ -335,6 +406,14 @@ export default function App() {
                 : "bg-white hover:bg-gray-50"}`}
             >
               📄 Análise da Conta
+            </button>
+            <button
+              onClick={() => setActiveTab("daily")}
+              className={`px-3 py-1.5 rounded-full border ${activeTab === "daily"
+                ? "bg-emerald-600 text-white border-emerald-600"
+                : "bg-white hover:bg-gray-50"}`}
+            >
+              📝 Registro Diário
             </button>
           </div>
 
@@ -586,6 +665,37 @@ export default function App() {
                   </CardBody>
                 </Card>
               )}
+            </Section>
+          )}
+
+          {activeTab === "daily" && (
+            <Section title="Registro Diário de Consumo">
+              <DailyUsageForm 
+                onSave={handleSaveRegistroDiario}
+                registroExistente={registroEditando}
+              />
+              
+              {registroEditando && (
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                  <div className="text-sm text-blue-800">
+                    ✏️ Editando registro de {registroEditando.data.split('-').reverse().join('/')}
+                  </div>
+                  <button
+                    onClick={() => setRegistroEditando(undefined)}
+                    className="text-sm text-blue-600 hover:text-blue-800 underline"
+                  >
+                    Cancelar edição
+                  </button>
+                </div>
+              )}
+
+              <div className="mt-6">
+                <DailyUsageHistory
+                  historico={registrosDiarios}
+                  onDelete={handleDeleteRegistro}
+                  onEdit={handleEditRegistro}
+                />
+              </div>
             </Section>
           )}
 

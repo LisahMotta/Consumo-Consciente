@@ -6,15 +6,42 @@ Aplicativo web educacional para monitoramento e redução do consumo de energia 
 
 ### ✨ Principais recursos
 
-- **📄 Upload de Conta de Energia (PDF)**: Faça upload da sua conta em PDF e receba análise automática com dicas personalizadas
-- **📊 Visualizações Interativas**: Gráficos de consumo diário, horário e comparação com metas
-- **🎯 Metas Personalizadas**: Defina e acompanhe suas metas de economia
-- **💰 Simulador de Economia**: Calcule economia potencial deslocando consumo do horário de pico
-- **🏆 Sistema de Selos**: Conquiste badges ao atingir metas (Bronze, Prata, Ouro)
-- **📅 Calendário de Consumo**: Visualize seu histórico mensal
-- **💡 Dicas Inteligentes**: Recomendações personalizadas baseadas em seus dados reais
-- **📥 Import CSV**: Suporte para importar dados históricos via CSV
-- **🔐 Privacidade**: Todo processamento é local, seus dados não saem do navegador
+- **📝 Registro Diário de Consumo** ⭐ **NOVO!**
+  - Questionário interativo para registrar uso de equipamentos
+  - Cálculo automático de consumo (kWh) e custo (R$)
+  - 40+ equipamentos pré-cadastrados com potências reais
+  - Histórico completo com estatísticas
+  - Edição e exclusão de registros
+
+- **📄 Upload de Conta de Energia (PDF)**
+  - Análise automática com dicas personalizadas
+  - Extração de consumo, valores e histórico
+
+- **📊 Visualizações Interativas**
+  - Gráficos de consumo diário, horário e comparação com metas
+  - Atualização automática com dados dos registros
+
+- **🎯 Metas Personalizadas**
+  - Defina e acompanhe suas metas de economia
+  - Ajuste automático baseado em dados reais
+
+- **💰 Simulador de Economia**
+  - Calcule economia potencial deslocando consumo do horário de pico
+
+- **🏆 Sistema de Selos**
+  - Conquiste badges ao atingir metas (Bronze, Prata, Ouro)
+
+- **📅 Calendário de Consumo**
+  - Visualize seu histórico mensal com cores
+
+- **💡 Dicas Inteligentes**
+  - Recomendações personalizadas baseadas em seus dados reais
+
+- **📥 Import CSV**
+  - Suporte para importar dados históricos via CSV
+
+- **🔐 Privacidade Total**
+  - Todo processamento é local, seus dados não saem do navegador
 
 ## 🛠️ Tecnologias
 
@@ -60,6 +87,27 @@ app/
 └── GUIA_UPLOAD_PDF.md            # Guia detalhado do upload
 ```
 
+## 📝 Como usar o Registro Diário (NOVO!)
+
+### Registre seu consumo detalhado:
+
+1. **Acesse** a aba "📝 Registro Diário"
+2. **Selecione a data** e configure a tarifa (R$/kWh)
+3. **Escolha equipamentos** por categoria (Climatização, Cozinha, Lazer, etc)
+4. **Informe horas e minutos** de uso de cada um
+5. **Veja o resumo** em tempo real (kWh e R$)
+6. **Salve** o registro do dia
+
+**Exemplo prático:**
+- TV: 8 horas → 0,8 kWh
+- Chuveiro: 20 minutos → 1,83 kWh
+- Ar-condicionado: 6 horas → 8,4 kWh
+- **Total**: 11,03 kWh (~R$ 8,82/dia)
+
+Veja o [Guia Completo de Registro Diário](./GUIA_REGISTRO_DIARIO.md) para mais detalhes.
+
+---
+
 ## 📄 Como usar o Upload de PDF
 
 1. **Prepare sua conta**: Tenha o PDF da conta de energia
@@ -93,6 +141,7 @@ O sistema analisa seus dados e gera:
 - **🏆 Selos**: Conquiste badges economizando
 - **📅 Calendário**: Veja seu histórico diário
 - **📄 Análise da Conta**: Resultados do PDF com dicas
+- **📝 Registro Diário**: ⭐ **NOVO!** Registre uso de equipamentos
 
 ## 🔒 Privacidade e Segurança
 
@@ -107,10 +156,16 @@ O sistema analisa seus dados e gera:
 - [x] Sistema de dicas personalizadas
 - [x] Gráficos interativos
 - [x] Sistema de badges
+- [x] Questionário diário de consumo
+- [x] Banco de dados de equipamentos
+- [x] Cálculo automático de kWh e custos
+- [x] Histórico com estatísticas
+- [ ] Adicionar equipamentos customizados
 - [ ] Integração com IoT (ESP32/Arduino)
 - [ ] Notificações de pico de consumo
 - [ ] Comparação com vizinhança
 - [ ] Export de relatórios
+- [ ] App mobile (PWA)
 
 ## 🤝 Contribuindo
 
