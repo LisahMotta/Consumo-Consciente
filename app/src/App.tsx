@@ -7,7 +7,9 @@ import {
 import BatteryGauge from "./components/BatteryGauge";
 import MonthCalendar from "./components/MonthCalendar";
 import OnboardingForm from "./components/OnboardingForm";
+import PdfUploader from "./components/PdfUploader";
 import type { HabitosConsumo } from "./components/OnboardingForm";
+import type { DadosContaEnergia } from "./components/PdfUploader";
 import { Container, Section, Card, CardBody, Input, Badge } from "./ui";
 
 export default function App() {
@@ -16,8 +18,9 @@ export default function App() {
   const [percentShift, setPercentShift] = useState<number>(20);
   const [metaHistory, setMetaHistory] = useState<Array<{ date: string; meta: number }>>([]);
   const [badges, setBadges] = useState({ bronze: false, silver: false, gold: false });
-  const [activeTab, setActiveTab] = useState<"meta" | "charts" | "badges" | "calendar">("meta");
+  const [activeTab, setActiveTab] = useState<"meta" | "charts" | "badges" | "calendar" | "pdf">("meta");
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
+  const [dicasPdf, setDicasPdf] = useState<string[]>([]);
 
   // dicas rápidas
   const dicas = [
@@ -69,6 +72,44 @@ export default function App() {
     style: "currency",
     currency: "BRL",
   });
+
+  /* ===== Processar dados do PDF ===== */
+  const handlePdfData = (dados: DadosContaEnergia) => {
+    // Atualizar dados do app com informações da conta
+    setMeta(Math.max(dados.consumoDiarioMedio * 0.9, dados.consumoDiarioMedio - 2));
+    
+    // Criar dados diários baseados no histórico ou consumo mensal
+    if (dados.historicoConsumo && dados.historicoConsumo.length > 0) {
+      const newDaily = dados.historicoConsumo.map(h => ({
+        label: h.mes,
+        kWh: h.kwh / 30 // Converter para média diária
+      }));
+      setDailyData(newDaily);
+    } else {
+      // Se não tiver histórico, criar dados simulados baseados no consumo
+      const consumoDiario = dados.consumoDiarioMedio;
+      const newDaily = Array.from({ length: 12 }, (_, i) => {
+        const variacao = (Math.random() - 0.5) * 2; // Variação de ±2 kWh
+        return {
+          label: `Mês ${i + 1}`,
+          kWh: Math.max(0, consumoDiario + variacao)
+        };
+      });
+      newDaily[newDaily.length - 1].kWh = consumoDiario; // Último valor = atual
+      setDailyData(newDaily);
+    }
+
+    // Salvar dicas do PDF
+    setDicasPdf(dados.dicas);
+
+    // Ir para a aba de PDF para mostrar os resultados
+    setActiveTab("pdf");
+
+    // Salvar no localStorage
+    try {
+      localStorage.setItem('dadosContaPdf', JSON.stringify(dados));
+    } catch {}
+  };
 
   /* ===== Upload de CSV ===== */
   const handleFile = (file?: File) => {
@@ -156,6 +197,11 @@ export default function App() {
       if (raw) setMetaHistory(JSON.parse(raw));
       const braw = localStorage.getItem("badges");
       if (braw) setBadges(JSON.parse(braw));
+      const pdfRaw = localStorage.getItem("dadosContaPdf");
+      if (pdfRaw) {
+        const dados: DadosContaEnergia = JSON.parse(pdfRaw);
+        setDicasPdf(dados.dicas || []);
+      }
       if (!raw) setShowOnboarding(true);
     } catch {}
   }, []);
@@ -209,6 +255,11 @@ export default function App() {
       {/* CONTEÚDO */}
       <Container>
         <div className="py-6">
+          {/* Upload de PDF */}
+          <div className="mb-6">
+            <PdfUploader onDataExtracted={handlePdfData} />
+          </div>
+
           {/* topo com gauge e upload */}
           <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
             <div className="text-center">
@@ -276,6 +327,14 @@ export default function App() {
                 : "bg-white hover:bg-gray-50"}`}
             >
               📅 Calendário
+            </button>
+            <button
+              onClick={() => setActiveTab("pdf")}
+              className={`px-3 py-1.5 rounded-full border ${activeTab === "pdf"
+                ? "bg-emerald-600 text-white border-emerald-600"
+                : "bg-white hover:bg-gray-50"}`}
+            >
+              📄 Análise da Conta
             </button>
           </div>
 
@@ -454,6 +513,79 @@ export default function App() {
                   />
                 </CardBody>
               </Card>
+            </Section>
+          )}
+
+          {activeTab === "pdf" && (
+            <Section title="Análise da sua Conta de Energia">
+              {dicasPdf.length > 0 ? (
+                <Card>
+                  <CardBody>
+                    <div className="space-y-4">
+                      <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-200">
+                        <h3 className="font-semibold text-emerald-900 mb-2">
+                          ✅ PDF processado com sucesso!
+                        </h3>
+                        <p className="text-sm text-emerald-800">
+                          Os dados da sua conta foram extraídos e analisados. Veja suas dicas personalizadas abaixo.
+                        </p>
+                      </div>
+
+                      <div className="bg-white rounded-xl border p-6">
+                        <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                          💡 Dicas Personalizadas de Economia
+                        </h3>
+                        <div className="space-y-3">
+                          {dicasPdf.map((dica, idx) => (
+                            <div 
+                              key={idx}
+                              className="flex gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-emerald-300 transition-colors"
+                            >
+                              <div className="text-2xl">{idx === 0 ? '🎯' : idx === 1 ? '💰' : idx === 2 ? '📊' : '✨'}</div>
+                              <div className="flex-1">
+                                <p className="text-gray-800">{dica}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                        <h4 className="font-medium text-blue-900 mb-2">📈 Próximos passos</h4>
+                        <ul className="text-sm text-blue-800 space-y-1 list-disc pl-5">
+                          <li>Ajuste sua meta diária na aba "Meta & Simulação"</li>
+                          <li>Monitore seu progresso na aba "Gráficos"</li>
+                          <li>Conquiste selos economizando energia na aba "Selos"</li>
+                          <li>Faça upload de contas mensais para acompanhar a evolução</li>
+                        </ul>
+                      </div>
+
+                      <div className="text-center">
+                        <button
+                          onClick={() => setActiveTab("meta")}
+                          className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium transition-colors"
+                        >
+                          Ir para Meta & Simulação
+                        </button>
+                      </div>
+                    </div>
+                  </CardBody>
+                </Card>
+              ) : (
+                <Card>
+                  <CardBody>
+                    <div className="text-center py-8">
+                      <div className="text-6xl mb-4">📄</div>
+                      <h3 className="text-lg font-medium text-gray-700 mb-2">
+                        Nenhum PDF analisado ainda
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Faça upload da sua conta de energia no campo acima para receber dicas personalizadas
+                      </p>
+                    </div>
+                  </CardBody>
+                </Card>
+              )}
             </Section>
           )}
 
