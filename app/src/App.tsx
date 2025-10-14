@@ -785,7 +785,7 @@ export default function App() {
           )}
 
           <footer className="text-xs text-gray-500 text-center pt-4">
-            MVP educacional – troque os dados sintéticos por leituras reais (CSV/IoT).
+            Consumo Consciente - Direitos reservados © 2025
           </footer>
         </div>
       </Container>
