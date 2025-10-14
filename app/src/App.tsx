@@ -10,6 +10,7 @@ import OnboardingForm from "./components/OnboardingForm";
 import PdfUploader from "./components/PdfUploader";
 import DailyUsageForm from "./components/DailyUsageForm";
 import DailyUsageHistory from "./components/DailyUsageHistory";
+import PeakHourAlert from "./components/PeakHourAlert";
 import type { HabitosConsumo } from "./components/OnboardingForm";
 import type { DadosContaEnergia } from "./components/PdfUploader";
 import type { RegistroDiario } from "./components/DailyUsageForm";
@@ -28,6 +29,9 @@ export default function App() {
   const [registroEditando, setRegistroEditando] = useState<RegistroDiario | undefined>(undefined);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
+  const [peakHourAlertEnabled, setPeakHourAlertEnabled] = useState(true);
+  const [peakHourStart, setPeakHourStart] = useState(18); // 18h
+  const [peakHourEnd, setPeakHourEnd] = useState(21); // 21h
 
   // dicas rápidas
   const dicas = [
@@ -315,6 +319,16 @@ export default function App() {
         atualizarGraficosComRegistros(registros);
       }
       
+      // Carregar preferências de alerta de horário de pico
+      const peakAlertEnabled = localStorage.getItem("peakHourAlertEnabled");
+      if (peakAlertEnabled !== null) {
+        setPeakHourAlertEnabled(peakAlertEnabled === 'true');
+      }
+      const savedPeakStart = localStorage.getItem("peakHourStart");
+      if (savedPeakStart) setPeakHourStart(parseInt(savedPeakStart));
+      const savedPeakEnd = localStorage.getItem("peakHourEnd");
+      if (savedPeakEnd) setPeakHourEnd(parseInt(savedPeakEnd));
+      
       // Verificar se é primeira visita OU se usuário quer ver onboarding novamente
       const hideOnboarding = localStorage.getItem("hideOnboarding");
       if (!raw && !hideOnboarding) {
@@ -337,6 +351,13 @@ export default function App() {
   /* ===== Render ===== */
   return (
     <div className="min-h-screen app-bg">
+      {/* Alerta de horário de pico */}
+      <PeakHourAlert 
+        peakHourStart={peakHourStart}
+        peakHourEnd={peakHourEnd}
+        enabled={peakHourAlertEnabled}
+      />
+      
       {/* HEADER */}
       <div className="pt-6 pb-4">
         <Container>
@@ -377,6 +398,16 @@ export default function App() {
                     className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm rounded-t-lg"
                   >
                     📝 Ver questionário inicial
+                  </button>
+                  <button
+                    onClick={() => {
+                      const newState = !peakHourAlertEnabled;
+                      setPeakHourAlertEnabled(newState);
+                      localStorage.setItem('peakHourAlertEnabled', String(newState));
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm border-t"
+                  >
+                    {peakHourAlertEnabled ? '🔕' : '🔔'} Alerta de horário de pico
                   </button>
                   <button
                     onClick={handleResetApp}
