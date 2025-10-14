@@ -11,6 +11,9 @@ import PdfUploader from "./components/PdfUploader";
 import DailyUsageForm from "./components/DailyUsageForm";
 import DailyUsageHistory from "./components/DailyUsageHistory";
 import PeakHourAlert from "./components/PeakHourAlert";
+import QuickCalculator from "./components/QuickCalculator";
+import DailyReminder from "./components/DailyReminder";
+import ExportReport from "./components/ExportReport";
 import type { HabitosConsumo } from "./components/OnboardingForm";
 import type { DadosContaEnergia } from "./components/PdfUploader";
 import type { RegistroDiario } from "./components/DailyUsageForm";
@@ -33,6 +36,8 @@ export default function App() {
   const [peakHourStart, setPeakHourStart] = useState(18); // 18h
   const [peakHourEnd, setPeakHourEnd] = useState(21); // 21h
   const [showMenu, setShowMenu] = useState(false);
+  const [dailyReminderEnabled, setDailyReminderEnabled] = useState(true);
+  const [reminderHour, setReminderHour] = useState(21); // 21h
 
   // dicas rápidas
   const dicas = [
@@ -330,6 +335,14 @@ export default function App() {
       const savedPeakEnd = localStorage.getItem("peakHourEnd");
       if (savedPeakEnd) setPeakHourEnd(parseInt(savedPeakEnd));
       
+      // Carregar preferências de lembretes
+      const reminderEnabled = localStorage.getItem("dailyReminderEnabled");
+      if (reminderEnabled !== null) {
+        setDailyReminderEnabled(reminderEnabled === 'true');
+      }
+      const savedReminderHour = localStorage.getItem("reminderHour");
+      if (savedReminderHour) setReminderHour(parseInt(savedReminderHour));
+      
       // Verificar se é primeira visita OU se usuário quer ver onboarding novamente
       const hideOnboarding = localStorage.getItem("hideOnboarding");
       if (!raw && !hideOnboarding) {
@@ -357,6 +370,12 @@ export default function App() {
         peakHourStart={peakHourStart}
         peakHourEnd={peakHourEnd}
         enabled={peakHourAlertEnabled}
+      />
+
+      {/* Lembretes diários */}
+      <DailyReminder
+        enabled={dailyReminderEnabled}
+        reminderHour={reminderHour}
       />
       
       {/* HEADER */}
@@ -425,6 +444,18 @@ export default function App() {
                       </button>
                       <button
                         onClick={() => {
+                          const newState = !dailyReminderEnabled;
+                          setDailyReminderEnabled(newState);
+                          localStorage.setItem('dailyReminderEnabled', String(newState));
+                          setShowMenu(false);
+                        }}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-50 text-sm border-t flex items-center gap-2"
+                      >
+                        <span className="text-lg">{dailyReminderEnabled ? '🔕' : '📬'}</span>
+                        <span>Lembrete diário (21h)</span>
+                      </button>
+                      <button
+                        onClick={() => {
                           handleResetApp();
                           setShowMenu(false);
                         }}
@@ -465,6 +496,11 @@ export default function App() {
           {/* Upload de PDF */}
           <div className="mb-6">
             <PdfUploader onDataExtracted={handlePdfData} />
+          </div>
+
+          {/* Calculadora Rápida */}
+          <div className="mb-6">
+            <QuickCalculator />
           </div>
 
           {/* topo com gauge e upload */}
@@ -822,6 +858,17 @@ export default function App() {
                   >
                     Cancelar edição
                   </button>
+                </div>
+              )}
+
+              {/* Exportar Relatório */}
+              {registrosDiarios.length > 0 && (
+                <div className="mt-6">
+                  <ExportReport
+                    registrosDiarios={registrosDiarios}
+                    meta={meta}
+                    badges={badges}
+                  />
                 </div>
               )}
 

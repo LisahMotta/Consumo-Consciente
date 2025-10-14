@@ -9,12 +9,14 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom'],
           'chart-vendor': ['recharts'],
-          'pdf-vendor': ['pdfjs-dist']
+          'pdf-vendor': ['pdfjs-dist'],
+          'export-vendor': ['jspdf', 'jspdf-autotable']
         }
       }
     }
