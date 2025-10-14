@@ -32,6 +32,7 @@ export default function App() {
   const [peakHourAlertEnabled, setPeakHourAlertEnabled] = useState(true);
   const [peakHourStart, setPeakHourStart] = useState(18); // 18h
   const [peakHourEnd, setPeakHourEnd] = useState(21); // 21h
+  const [showMenu, setShowMenu] = useState(false);
 
   // dicas rápidas
   const dicas = [
@@ -380,8 +381,9 @@ export default function App() {
               )}
               
               {/* Menu do app */}
-              <div className="relative group">
+              <div className="relative">
                 <button
+                  onClick={() => setShowMenu(!showMenu)}
                   className="w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-emerald-50 border border-emerald-100 grid place-items-center hover:bg-emerald-100 transition-colors"
                   title="Menu"
                 >
@@ -389,33 +391,51 @@ export default function App() {
                 </button>
                 
                 {/* Dropdown menu */}
-                <div className="hidden group-hover:block absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                  <button
-                    onClick={() => {
-                      localStorage.removeItem('hideOnboarding');
-                      setShowOnboarding(true);
-                    }}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm rounded-t-lg"
-                  >
-                    📝 Ver questionário inicial
-                  </button>
-                  <button
-                    onClick={() => {
-                      const newState = !peakHourAlertEnabled;
-                      setPeakHourAlertEnabled(newState);
-                      localStorage.setItem('peakHourAlertEnabled', String(newState));
-                    }}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm border-t"
-                  >
-                    {peakHourAlertEnabled ? '🔕' : '🔔'} Alerta de horário de pico
-                  </button>
-                  <button
-                    onClick={handleResetApp}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-red-600 rounded-b-lg border-t"
-                  >
-                    🗑️ Resetar app
-                  </button>
-                </div>
+                {showMenu && (
+                  <>
+                    {/* Backdrop para fechar menu */}
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setShowMenu(false)}
+                    />
+                    
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                      <button
+                        onClick={() => {
+                          localStorage.removeItem('hideOnboarding');
+                          setShowOnboarding(true);
+                          setShowMenu(false);
+                        }}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-50 text-sm rounded-t-lg flex items-center gap-2"
+                      >
+                        <span className="text-lg">📝</span>
+                        <span>Ver questionário inicial</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          const newState = !peakHourAlertEnabled;
+                          setPeakHourAlertEnabled(newState);
+                          localStorage.setItem('peakHourAlertEnabled', String(newState));
+                          setShowMenu(false);
+                        }}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-50 text-sm border-t flex items-center gap-2"
+                      >
+                        <span className="text-lg">{peakHourAlertEnabled ? '🔕' : '🔔'}</span>
+                        <span>Alerta de horário de pico</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleResetApp();
+                          setShowMenu(false);
+                        }}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-50 text-sm text-red-600 rounded-b-lg border-t flex items-center gap-2"
+                      >
+                        <span className="text-lg">🗑️</span>
+                        <span>Resetar app</span>
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
