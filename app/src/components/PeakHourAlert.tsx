@@ -54,7 +54,7 @@ export default function PeakHourAlert({ peakHourStart, peakHourEnd, enabled }: P
 
     // Enviar notificação se permitido
     if ('Notification' in window && Notification.permission === 'granted') {
-      const notification = new Notification('⚠️ Horário de Pico!', {
+      new Notification('⚠️ Horário de Pico!', {
         body: `São ${currentHour}h - Horário de maior consumo. Evite usar ar-condicionado, chuveiro e eletrodomésticos de alta potência.`,
         icon: '/icon-192x192.png',
         badge: '/icon-96x96.png',
