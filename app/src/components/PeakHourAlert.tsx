@@ -54,14 +54,18 @@ export default function PeakHourAlert({ peakHourStart, peakHourEnd, enabled }: P
 
     // Enviar notificação se permitido
     if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('⚠️ Horário de Pico!', {
+      const notification = new Notification('⚠️ Horário de Pico!', {
         body: `São ${currentHour}h - Horário de maior consumo. Evite usar ar-condicionado, chuveiro e eletrodomésticos de alta potência.`,
         icon: '/icon-192x192.png',
         badge: '/icon-96x96.png',
         tag: 'peak-hour-alert',
-        requireInteraction: false,
-        vibrate: [200, 100, 200]
+        requireInteraction: false
       });
+      
+      // Vibrar se disponível (mobile)
+      if ('vibrate' in navigator) {
+        navigator.vibrate([200, 100, 200]);
+      }
     }
   };
 
