@@ -51,13 +51,13 @@ export default function OnboardingForm({ onFinish }: Props) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-white p-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-white p-4 md:p-6 overflow-y-auto">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-3xl bg-white rounded-2xl shadow-lg p-6 space-y-6"
+        className="w-full max-w-3xl bg-white rounded-2xl shadow-lg p-4 md:p-6 space-y-4 md:space-y-6 my-4"
       >
-        <h1 className="text-2xl font-semibold">Bem-vinda! Vamos entender seus hábitos 👋</h1>
-        <p className="text-sm text-gray-600">
+        <h1 className="text-xl md:text-2xl font-semibold">Bem-vinda! Vamos entender seus hábitos 👋</h1>
+        <p className="text-xs md:text-sm text-gray-600">
           Leva 1 minuto. Suas respostas geram recomendações personalizadas de economia e
           configuram o app para você.
         </p>
@@ -201,9 +201,9 @@ export default function OnboardingForm({ onFinish }: Props) {
           </div>
         </div>
 
-        <div className="bg-emerald-50 rounded-xl p-4">
-          <div className="font-medium mb-2">Sugestões preliminares</div>
-          <ul className="text-sm text-emerald-900 list-disc pl-5 space-y-1">
+        <div className="bg-emerald-50 rounded-xl p-3 md:p-4">
+          <div className="font-medium mb-2 text-sm md:text-base">Sugestões preliminares</div>
+          <ul className="text-xs md:text-sm text-emerald-900 list-disc pl-4 md:pl-5 space-y-1">
             {sugestoes.map((s: string, i: number) => (<li key={i}>{s}</li>))}
           </ul>
         </div>

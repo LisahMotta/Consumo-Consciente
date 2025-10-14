@@ -707,18 +707,20 @@ export default function App() {
 
       {/* Onboarding modal */}
       {showOnboarding && (
-        <div className="fixed inset-0 bg-black/40 grid place-items-center z-50">
-          <div className="w-full max-w-3xl">
-            <OnboardingForm
-              onFinish={(habitos: HabitosConsumo) => {
-                // Exemplo simples: ajusta ligeiramente a meta com base em hábitos
-                if (habitos && habitos.banhoMin) {
-                  const suggested = Math.max(12, Math.round(mediaAtual - 1));
-                  setMeta(suggested);
-                }
-                setShowOnboarding(false);
-              }}
-            />
+        <div className="fixed inset-0 bg-black/40 z-50 overflow-y-auto">
+          <div className="min-h-screen flex items-center justify-center p-4">
+            <div className="w-full max-w-3xl">
+              <OnboardingForm
+                onFinish={(habitos: HabitosConsumo) => {
+                  // Exemplo simples: ajusta ligeiramente a meta com base em hábitos
+                  if (habitos && habitos.banhoMin) {
+                    const suggested = Math.max(12, Math.round(mediaAtual - 1));
+                    setMeta(suggested);
+                  }
+                  setShowOnboarding(false);
+                }}
+              />
+            </div>
           </div>
         </div>
       )}
