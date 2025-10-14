@@ -54,13 +54,17 @@ export default function OnboardingForm({ onFinish }: Props) {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-white p-4 md:p-6 overflow-y-auto">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-3xl bg-white rounded-2xl shadow-lg p-4 md:p-6 space-y-4 md:space-y-6 my-4"
+        className="w-full max-w-3xl bg-white rounded-2xl shadow-lg p-4 md:p-6 space-y-4 md:space-y-6 my-4 relative"
       >
-        <h1 className="text-xl md:text-2xl font-semibold">Bem-vinda! Vamos entender seus hábitos 👋</h1>
-        <p className="text-xs md:text-sm text-gray-600">
-          Leva 1 minuto. Suas respostas geram recomendações personalizadas de economia e
-          configuram o app para você.
-        </p>
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <h1 className="text-xl md:text-2xl font-semibold">Bem-vinda! Vamos entender seus hábitos 👋</h1>
+            <p className="text-xs md:text-sm text-gray-600 mt-1">
+              Leva 1 minuto. Suas respostas geram recomendações personalizadas de economia e
+              configuram o app para você.
+            </p>
+          </div>
+        </div>
 
         {/* Linha 1 */}
         <div className="grid md:grid-cols-3 gap-4">

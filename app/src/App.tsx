@@ -26,6 +26,8 @@ export default function App() {
   const [dicasPdf, setDicasPdf] = useState<string[]>([]);
   const [registrosDiarios, setRegistrosDiarios] = useState<RegistroDiario[]>([]);
   const [registroEditando, setRegistroEditando] = useState<RegistroDiario | undefined>(undefined);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallButton, setShowInstallButton] = useState(false);
 
   // dicas rápidas
   const dicas = [
@@ -255,6 +257,45 @@ export default function App() {
     setMeta(Math.max(mediaConsumo * 0.9, mediaConsumo - 2));
   };
 
+  /* ===== Capturar evento de instalação PWA ===== */
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallButton(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+
+    // Verificar se já está instalado
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setShowInstallButton(false);
+    }
+
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  /* ===== Instalar PWA ===== */
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+      setShowInstallButton(false);
+    }
+  };
+
+  /* ===== Resetar app e mostrar onboarding ===== */
+  const handleResetApp = () => {
+    if (confirm('Isso vai apagar todos os seus dados e reiniciar o app. Deseja continuar?')) {
+      localStorage.clear();
+      window.location.reload();
+    }
+  };
+
   /* ===== Carregar/salvar badges e onboarding ===== */
   useEffect(() => {
     try {
@@ -273,7 +314,12 @@ export default function App() {
         setRegistrosDiarios(registros);
         atualizarGraficosComRegistros(registros);
       }
-      if (!raw) setShowOnboarding(true);
+      
+      // Verificar se é primeira visita OU se usuário quer ver onboarding novamente
+      const hideOnboarding = localStorage.getItem("hideOnboarding");
+      if (!raw && !hideOnboarding) {
+        setShowOnboarding(true);
+      }
     } catch {}
   }, []);
 
@@ -299,8 +345,47 @@ export default function App() {
               <h1 className="serif-heading">Consumo Consciente</h1>
               <div className="text-gray-600 mt-1 text-lg">Bem-vindo ao seu ajudante de economia de energia ⚡</div>
             </div>
-            <div className="w-20 h-20 rounded-full bg-emerald-50 border border-emerald-100 grid place-items-center">
-              <div className="text-3xl text-emerald-800">💡</div>
+            <div className="flex gap-2">
+              {/* Botão de instalar PWA */}
+              {showInstallButton && (
+                <button
+                  onClick={handleInstallClick}
+                  className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                  title="Instalar app"
+                >
+                  <span className="text-lg">📱</span>
+                  <span className="hidden sm:inline">Instalar App</span>
+                </button>
+              )}
+              
+              {/* Menu do app */}
+              <div className="relative group">
+                <button
+                  className="w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-emerald-50 border border-emerald-100 grid place-items-center hover:bg-emerald-100 transition-colors"
+                  title="Menu"
+                >
+                  <div className="text-2xl sm:text-3xl text-emerald-800">💡</div>
+                </button>
+                
+                {/* Dropdown menu */}
+                <div className="hidden group-hover:block absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                  <button
+                    onClick={() => {
+                      localStorage.removeItem('hideOnboarding');
+                      setShowOnboarding(true);
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm rounded-t-lg"
+                  >
+                    📝 Ver questionário inicial
+                  </button>
+                  <button
+                    onClick={handleResetApp}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-red-600 rounded-b-lg border-t"
+                  >
+                    🗑️ Resetar app
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </Container>
@@ -717,6 +802,8 @@ export default function App() {
                     const suggested = Math.max(12, Math.round(mediaAtual - 1));
                     setMeta(suggested);
                   }
+                  // Marcar que usuário já viu o onboarding
+                  localStorage.setItem('hideOnboarding', 'true');
                   setShowOnboarding(false);
                 }}
               />
