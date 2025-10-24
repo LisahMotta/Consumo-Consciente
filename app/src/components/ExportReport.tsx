@@ -26,7 +26,7 @@ export default function ExportReport({ registrosDiarios, meta, badges }: Props) 
       
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(24);
-      doc.text('💡 Consumo Consciente', 105, 20, { align: 'center' });
+      doc.text('Consumo Consciente', 105, 20, { align: 'center' });
       
       doc.setFontSize(12);
       doc.text('Relatório Mensal de Consumo de Energia', 105, 30, { align: 'center' });
@@ -46,7 +46,7 @@ export default function ExportReport({ registrosDiarios, meta, badges }: Props) 
 
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text('📊 Resumo Geral', 20, 60);
+      doc.text('Resumo Geral', 20, 60);
       
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(11);
@@ -63,7 +63,7 @@ export default function ExportReport({ registrosDiarios, meta, badges }: Props) 
       // Tabela de registros diários
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text('📅 Histórico Diário', 20, 120);
+      doc.text('Histórico Diário', 20, 120);
 
       const dadosTabela = registrosDiarios
         .sort((a, b) => b.data.localeCompare(a.data))
@@ -75,7 +75,7 @@ export default function ExportReport({ registrosDiarios, meta, badges }: Props) 
             r.registros.length,
             `${r.consumoTotal.toFixed(2)} kWh`,
             `R$ ${r.custoTotal.toFixed(2)}`,
-            r.consumoTotal <= meta ? '✅' : '❌'
+            r.consumoTotal <= meta ? 'L' : ''
           ];
         });
 
@@ -114,7 +114,7 @@ export default function ExportReport({ registrosDiarios, meta, badges }: Props) 
       
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text('🏆 Top 5 Equipamentos que mais consomem', 20, finalY + 15);
+      doc.text('Top 5 Equipamentos que mais consomem', 20, finalY + 15);
 
       const dadosTop5 = top5.map(id => {
         const equip = EQUIPAMENTOS_PADRAO.find(e => e.id === id);
