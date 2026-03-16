@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "npx serve public --listen 3000"
+    "build": "cd app && npm install && npm run build",
+    "start": "npx serve -s app/dist -l $PORT"
   }
 }
