@@ -2,6 +2,9 @@
 builder = "nixpacks"
 buildCommand = "cd app && npm install && npm run build"
 
+[build.nixpacksPlan.phases.setup]
+nixPkgs = ["nodejs_20"]
+
 [deploy]
 startCommand = "npx serve -s app/dist -l $PORT"
 restartPolicyType = "ON_FAILURE"
