@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export type FormattingMode = 'KDP' | 'ABNT';
 
@@ -113,37 +113,26 @@ export async function formatBook(
   onChunk: (chunk: string) => void,
   signal?: AbortSignal
 ): Promise<string> {
-  const client = new Anthropic({
-    apiKey,
-    dangerouslyAllowBrowser: true,
+  const genAI = new GoogleGenerativeAI(apiKey);
+
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-2.0-flash',
+    systemInstruction: SYSTEM_PROMPT,
   });
 
-  const stream = client.messages.stream(
-    {
-      model: 'claude-opus-4-6',
-      max_tokens: 64000,
-      thinking: { type: 'adaptive' } as Anthropic.ThinkingConfigParam,
-      system: SYSTEM_PROMPT,
-      messages: [
-        {
-          role: 'user',
-          content: `Modo: ${mode}\n\nTexto:\n${text}`,
-        },
-      ],
-    },
+  const result = await model.generateContentStream(
+    `Modo: ${mode}\n\nTexto:\n${text}`,
     { signal }
   );
 
   let fullText = '';
 
-  for await (const event of stream) {
+  for await (const chunk of result.stream) {
     if (signal?.aborted) break;
-    if (
-      event.type === 'content_block_delta' &&
-      event.delta.type === 'text_delta'
-    ) {
-      fullText += event.delta.text;
-      onChunk(event.delta.text);
+    const chunkText = chunk.text();
+    if (chunkText) {
+      fullText += chunkText;
+      onChunk(chunkText);
     }
   }
 

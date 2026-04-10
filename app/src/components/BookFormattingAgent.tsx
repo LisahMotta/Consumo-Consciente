@@ -3,7 +3,7 @@ import { formatBook, type FormattingMode } from '../services/bookFormattingAgent
 
 export default function BookFormattingAgent() {
   const [apiKey, setApiKey] = useState(
-    (import.meta as any).env?.VITE_ANTHROPIC_API_KEY || ''
+    (import.meta as any).env?.VITE_GEMINI_API_KEY || ''
   );
   const [showApiKey, setShowApiKey] = useState(false);
   const [text, setText] = useState('');
@@ -42,8 +42,8 @@ export default function BookFormattingAgent() {
     } catch (err: unknown) {
       const apiErr = err as { name?: string; message?: string; status?: number };
       if (apiErr.name !== 'AbortError') {
-        if (apiErr.status === 401) {
-          setError('Chave de API inválida. Verifique sua chave da Anthropic.');
+        if (apiErr.status === 400 || apiErr.message?.includes('API_KEY')) {
+          setError('Chave de API inválida. Obtenha sua chave gratuita em aistudio.google.com');
         } else {
           setError(apiErr.message || 'Erro ao formatar o livro. Tente novamente.');
         }
@@ -101,6 +101,9 @@ ${htmlOutput}
         <h2 className="text-2xl font-bold mb-1">📚 Agente de Diagramação de Livros</h2>
         <p className="text-violet-200 text-sm">
           Transforme texto bruto em livro estruturado para Amazon KDP ou ABNT
+          <span className="ml-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">
+            Gemini 2.0 Flash — Gratuito
+          </span>
         </p>
       </div>
 
@@ -108,14 +111,15 @@ ${htmlOutput}
         {/* API Key */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            🔑 Chave de API Anthropic
+            🔑 Chave de API Google Gemini{' '}
+            <span className="text-green-600 font-semibold text-xs">(gratuita)</span>
           </label>
           <div className="relative">
             <input
               type={showApiKey ? 'text' : 'password'}
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              placeholder="sk-ant-..."
+              placeholder="AIza..."
               className="w-full px-4 py-2 border rounded-lg text-sm font-mono pr-10 focus:outline-none focus:ring-2 focus:ring-violet-400"
             />
             <button
@@ -128,8 +132,10 @@ ${htmlOutput}
             </button>
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            A chave não é armazenada localmente. Em produção, use a variável{' '}
-            <code className="bg-gray-100 px-1 rounded">VITE_ANTHROPIC_API_KEY</code>.
+            Obtenha gratuitamente em{' '}
+            <span className="text-violet-600 font-medium">aistudio.google.com</span>.
+            Em produção, use a variável{' '}
+            <code className="bg-gray-100 px-1 rounded">VITE_GEMINI_API_KEY</code>.
           </p>
         </div>
 
