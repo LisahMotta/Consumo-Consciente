@@ -16,53 +16,33 @@ export default function BookFormattingAgent() {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const handleFormat = useCallback(async () => {
-    if (!text.trim()) {
-      setError('Por favor, insira o texto a ser formatado.');
-      return;
-    }
-    if (!apiKey.trim()) {
-      setError('Por favor, insira sua chave de API da Anthropic.');
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-    setHtmlOutput('');
-
+    if (!text.trim()) { setError('Insira o texto a ser formatado.'); return; }
+    if (!apiKey.trim()) { setError('Insira sua chave de API Gemini.'); return; }
+    setIsLoading(true); setError(null); setHtmlOutput('');
     abortControllerRef.current = new AbortController();
-
     try {
-      await formatBook(
-        text,
-        mode,
-        apiKey,
+      await formatBook(text, mode, apiKey,
         (chunk) => setHtmlOutput((prev) => prev + chunk),
         abortControllerRef.current.signal
       );
     } catch (err: unknown) {
-      const apiErr = err as { name?: string; message?: string; status?: number };
-      if (apiErr.name !== 'AbortError') {
-        if (apiErr.status === 400 || apiErr.message?.includes('API_KEY')) {
-          setError('Chave de API inválida. Obtenha sua chave gratuita em aistudio.google.com');
+      const e = err as { name?: string; message?: string; status?: number };
+      if (e.name !== 'AbortError') {
+        if (e.status === 400 || e.message?.includes('API_KEY')) {
+          setError('Chave de API inválida. Obtenha gratuitamente em aistudio.google.com');
         } else {
-          setError(apiErr.message || 'Erro ao formatar o livro. Tente novamente.');
+          setError(e.message || 'Erro ao formatar. Tente novamente.');
         }
       }
-    } finally {
-      setIsLoading(false);
-    }
+    } finally { setIsLoading(false); }
   }, [text, mode, apiKey]);
 
-  const handleStop = () => {
-    abortControllerRef.current?.abort();
-    setIsLoading(false);
-  };
+  const handleStop = () => { abortControllerRef.current?.abort(); setIsLoading(false); };
 
   const handleDownload = () => {
-    const content =
-      htmlOutput.trim().startsWith('<!DOCTYPE') || htmlOutput.trim().startsWith('<html')
-        ? htmlOutput
-        : `<!DOCTYPE html>
+    const content = htmlOutput.trim().startsWith('<!DOCTYPE') || htmlOutput.trim().startsWith('<html')
+      ? htmlOutput
+      : `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -73,229 +53,260 @@ export default function BookFormattingAgent() {
 ${htmlOutput}
 </body>
 </html>`;
-
     const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `livro-${mode.toLowerCase()}-${Date.now()}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const a = Object.assign(document.createElement('a'), {
+      href: URL.createObjectURL(blob),
+      download: `livro-${mode.toLowerCase()}-${Date.now()}.html`,
+    });
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
   };
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(htmlOutput);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopied(true); setTimeout(() => setCopied(false), 2000);
   };
 
-  const charCount = text.length;
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const estimatedPages = Math.max(1, Math.ceil(wordCount / 300));
+  const outputWords = htmlOutput ? htmlOutput.replace(/<[^>]+>/g, ' ').trim().split(/\s+/).length : 0;
+  const outputPages = Math.max(1, Math.ceil(outputWords / 300));
 
   return (
-    <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-violet-600 to-purple-700 p-6 text-white">
-        <h2 className="text-2xl font-bold mb-1">📚 Agente de Diagramação de Livros</h2>
-        <p className="text-violet-200 text-sm">
-          Transforme texto bruto em livro estruturado para Amazon KDP ou ABNT
-          <span className="ml-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">
-            Gemini 2.0 Flash — Gratuito
-          </span>
-        </p>
-      </div>
+    <div className="min-h-screen bg-slate-950 font-sans">
 
-      <div className="p-6 space-y-5">
-        {/* API Key */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            🔑 Chave de API Google Gemini{' '}
-            <span className="text-green-600 font-semibold text-xs">(gratuita)</span>
-          </label>
-          <div className="relative">
-            <input
-              type={showApiKey ? 'text' : 'password'}
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="AIza..."
-              className="w-full px-4 py-2 border rounded-lg text-sm font-mono pr-10 focus:outline-none focus:ring-2 focus:ring-violet-400"
-            />
-            <button
-              type="button"
-              onClick={() => setShowApiKey((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-lg leading-none"
-              aria-label={showApiKey ? 'Ocultar chave' : 'Mostrar chave'}
-            >
-              {showApiKey ? '🙈' : '👁️'}
-            </button>
+      {/* Top Header */}
+      <header className="bg-slate-900 border-b border-slate-800 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-violet-600 flex items-center justify-center text-lg shadow-lg shadow-violet-900">
+              📚
+            </div>
+            <div>
+              <h1 className="text-white font-bold text-lg leading-none">Agente de Diagramação</h1>
+              <p className="text-slate-400 text-xs mt-0.5">Transforme texto bruto em livro publicável</p>
+            </div>
           </div>
-          <p className="text-xs text-gray-500 mt-1">
-            Obtenha gratuitamente em{' '}
-            <span className="text-violet-600 font-medium">aistudio.google.com</span>.
-            Em produção, use a variável{' '}
-            <code className="bg-gray-100 px-1 rounded">VITE_GEMINI_API_KEY</code>.
-          </p>
-        </div>
-
-        {/* Mode Selector */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            📋 Modo de Diagramação
-          </label>
-          <div className="flex gap-3">
-            {(['KDP', 'ABNT'] as FormattingMode[]).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setMode(m)}
-                className={`flex-1 py-3 px-4 rounded-lg border-2 text-sm font-medium transition-all text-center ${
-                  mode === m
-                    ? 'border-violet-600 bg-violet-50 text-violet-700'
-                    : 'border-gray-200 text-gray-600 hover:border-violet-300'
-                }`}
-              >
-                <div className="text-xl mb-1">{m === 'KDP' ? '📱' : '📖'}</div>
-                <div className="font-semibold">{m}</div>
-                <div className="text-xs opacity-70 mt-0.5">
-                  {m === 'KDP' ? 'Amazon Kindle / Ebook' : 'Livro Físico Acadêmico'}
-                </div>
-              </button>
-            ))}
-          </div>
-
-          {/* Mode info badge */}
-          <div className="mt-2 p-3 bg-gray-50 rounded-lg text-xs text-gray-600">
-            {mode === 'KDP' ? (
-              <>
-                <strong>KDP:</strong> HTML limpo com &lt;h1&gt;, &lt;h2&gt;, &lt;p&gt; — sem CSS fixo, otimizado
-                para leitura em Kindle e dispositivos móveis.
-              </>
-            ) : (
-              <>
-                <strong>ABNT:</strong> Capa, folha de rosto, sumário, desenvolvimento e referências —
-                Times New Roman 12pt, espaçamento 1,5, margens 3/2 cm.
-              </>
-            )}
+          <div className="flex items-center gap-2">
+            <span className="bg-emerald-500/15 text-emerald-400 text-xs font-medium px-3 py-1 rounded-full border border-emerald-500/30">
+              ● Gemini 2.0 Flash
+            </span>
+            <span className="bg-violet-500/15 text-violet-400 text-xs font-medium px-3 py-1 rounded-full border border-violet-500/30">
+              Gratuito
+            </span>
           </div>
         </div>
+      </header>
 
-        {/* Text Input */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            📝 Texto Bruto
-          </label>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            rows={10}
-            placeholder="Cole aqui o texto bruto que deseja transformar em livro estruturado...&#10;&#10;Pode incluir rascunhos, anotações, artigos, transcrições — o agente irá organizar e formatar tudo."
-            className="w-full px-4 py-3 border rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-violet-400 font-mono leading-relaxed"
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            {charCount.toLocaleString('pt-BR')} caracteres · {wordCount.toLocaleString('pt-BR')} palavras
-          </p>
-        </div>
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
-        {/* Action Button */}
-        <div className="flex gap-3">
-          {!isLoading ? (
-            <button
-              type="button"
-              onClick={handleFormat}
-              disabled={!text.trim() || !apiKey.trim()}
-              className="flex-1 py-3 px-6 bg-violet-600 hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
-            >
-              ✨ Formatar Livro
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleStop}
-              className="flex-1 py-3 px-6 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
-            >
-              <span className="inline-block animate-spin">⏳</span>
-              Gerando… (clique para parar)
-            </button>
-          )}
-        </div>
+          {/* ── Left Panel: Controls ── */}
+          <aside className="lg:col-span-2 flex flex-col gap-4">
 
-        {/* Error */}
-        {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-            ⚠️ {error}
-          </div>
-        )}
-
-        {/* Output */}
-        {htmlOutput && (
-          <div className="border rounded-xl overflow-hidden">
-            {/* Tabs + Actions */}
-            <div className="flex items-center border-b bg-gray-50">
-              <button
-                type="button"
-                onClick={() => setActiveView('preview')}
-                className={`px-4 py-2.5 text-sm font-medium transition-colors ${
-                  activeView === 'preview'
-                    ? 'bg-white border-b-2 border-violet-600 text-violet-700'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                👁️ Preview
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveView('source')}
-                className={`px-4 py-2.5 text-sm font-medium transition-colors ${
-                  activeView === 'source'
-                    ? 'bg-white border-b-2 border-violet-600 text-violet-700'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                🗒️ HTML Fonte
-              </button>
-              <div className="flex-1" />
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="px-3 py-2.5 text-sm text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                {copied ? '✅ Copiado!' : '📋 Copiar'}
-              </button>
-              <button
-                type="button"
-                onClick={handleDownload}
-                className="px-3 py-2.5 text-sm text-violet-600 hover:text-violet-800 font-medium transition-colors border-l"
-              >
-                ⬇️ Download .html
-              </button>
+            {/* API Key Card */}
+            <div className="bg-slate-900 rounded-xl border border-slate-800 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Autenticação</span>
+              </div>
+              <label className="block text-slate-300 text-sm font-medium mb-1.5">
+                Chave de API Gemini
+              </label>
+              <div className="relative">
+                <input
+                  type={showApiKey ? 'text' : 'password'}
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder="AIza..."
+                  className="w-full bg-slate-800 border border-slate-700 text-slate-200 placeholder-slate-500 rounded-lg px-3 py-2.5 text-sm font-mono pr-10 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
+                />
+                <button type="button" onClick={() => setShowApiKey(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition">
+                  {showApiKey ? '🙈' : '👁️'}
+                </button>
+              </div>
+              <p className="text-slate-500 text-xs mt-2">
+                Obtenha grátis em{' '}
+                <span className="text-violet-400 font-medium">aistudio.google.com</span>
+              </p>
             </div>
 
-            {/* Content */}
-            {activeView === 'preview' ? (
-              <iframe
-                srcDoc={htmlOutput}
-                className="w-full border-0 bg-white"
-                style={{ minHeight: '500px' }}
-                sandbox="allow-same-origin"
-                title="Prévia do livro formatado"
-              />
-            ) : (
-              <pre className="p-4 text-xs font-mono bg-gray-900 text-green-400 overflow-auto max-h-[500px] whitespace-pre-wrap break-all">
-                {htmlOutput}
-              </pre>
-            )}
-
-            {/* Footer stats */}
-            <div className="px-4 py-2 bg-gray-50 border-t text-xs text-gray-500 flex justify-between">
-              <span>
-                {htmlOutput.length.toLocaleString('pt-BR')} caracteres gerados
+            {/* Mode Selector Card */}
+            <div className="bg-slate-900 rounded-xl border border-slate-800 p-4">
+              <span className="block text-slate-400 text-xs font-semibold uppercase tracking-wider mb-3">
+                Modo de Saída
               </span>
-              <span className="text-violet-600 font-medium">Modo: {mode}</span>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { key: 'KDP', icon: '📱', label: 'Amazon KDP', sub: 'Ebook / Kindle' },
+                  { key: 'ABNT', icon: '📖', label: 'Livro Físico', sub: 'Normas ABNT' },
+                ] as { key: FormattingMode; icon: string; label: string; sub: string }[]).map(({ key, icon, label, sub }) => (
+                  <button key={key} type="button" onClick={() => setMode(key)}
+                    className={`relative p-3 rounded-lg border-2 text-left transition-all ${
+                      mode === key
+                        ? 'border-violet-500 bg-violet-500/10'
+                        : 'border-slate-700 bg-slate-800 hover:border-slate-600'
+                    }`}>
+                    {mode === key && (
+                      <span className="absolute top-2 right-2 w-4 h-4 bg-violet-500 rounded-full flex items-center justify-center text-white text-xs">✓</span>
+                    )}
+                    <div className="text-2xl mb-1.5">{icon}</div>
+                    <div className={`text-sm font-semibold ${mode === key ? 'text-violet-300' : 'text-slate-300'}`}>{label}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">{sub}</div>
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3 p-2.5 bg-slate-800 rounded-lg text-xs text-slate-400 leading-relaxed">
+                {mode === 'KDP'
+                  ? '📱 HTML limpo com h1/h2/p. Sem CSS fixo. Otimizado para Kindle e dispositivos móveis.'
+                  : '📖 Estrutura ABNT completa: capa, sumário, desenvolvimento. Times New Roman 12pt.'}
+              </div>
             </div>
-          </div>
-        )}
+
+            {/* Text Input Card */}
+            <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 flex-1">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Texto de Entrada</span>
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <span>{wordCount.toLocaleString('pt-BR')} palavras</span>
+                  <span>·</span>
+                  <span>~{estimatedPages} pág.</span>
+                </div>
+              </div>
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                rows={12}
+                placeholder="Cole aqui o texto bruto — rascunhos, anotações, artigos, transcrições…
+
+O agente irá organizar, dividir em capítulos e formatar para publicação."
+                className="w-full bg-slate-800 border border-slate-700 text-slate-200 placeholder-slate-500 rounded-lg px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition leading-relaxed"
+              />
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-slate-600 text-xs">{text.length.toLocaleString('pt-BR')} caracteres</span>
+              </div>
+            </div>
+
+            {/* Action Button */}
+            {!isLoading ? (
+              <button type="button" onClick={handleFormat}
+                disabled={!text.trim() || !apiKey.trim()}
+                className="w-full py-3.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-sm transition-all shadow-lg shadow-violet-900/50 flex items-center justify-center gap-2">
+                <span className="text-base">✨</span>
+                Formatar Livro
+              </button>
+            ) : (
+              <button type="button" onClick={handleStop}
+                className="w-full py-3.5 bg-red-600 hover:bg-red-500 text-white rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2">
+                <span className="inline-block animate-spin">⏳</span>
+                Gerando… clique para parar
+              </button>
+            )}
+
+            {error && (
+              <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-sm text-red-400">
+                ⚠️ {error}
+              </div>
+            )}
+          </aside>
+
+          {/* ── Right Panel: Output ── */}
+          <main className="lg:col-span-3 flex flex-col">
+            <div className="bg-slate-900 rounded-xl border border-slate-800 flex flex-col flex-1 overflow-hidden">
+
+              {/* Output Header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+                <div className="flex items-center gap-1">
+                  {(['preview', 'source'] as const).map(v => (
+                    <button key={v} type="button" onClick={() => setActiveView(v)}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                        activeView === v
+                          ? 'bg-violet-600 text-white'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                      }`}>
+                      {v === 'preview' ? '👁️ Preview' : '🗒️ HTML Fonte'}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={handleCopy}
+                    disabled={!htmlOutput}
+                    className="px-3 py-1.5 text-sm text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition disabled:opacity-30 disabled:cursor-not-allowed">
+                    {copied ? '✅ Copiado!' : '📋 Copiar'}
+                  </button>
+                  <button type="button" onClick={handleDownload}
+                    disabled={!htmlOutput}
+                    className="px-3 py-1.5 text-sm bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition font-medium disabled:opacity-30 disabled:cursor-not-allowed">
+                    ⬇️ Download .html
+                  </button>
+                </div>
+              </div>
+
+              {/* Output Body */}
+              <div className="flex-1 relative" style={{ minHeight: '500px' }}>
+                {!htmlOutput && !isLoading && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
+                    <div className="text-6xl mb-4 opacity-20">📄</div>
+                    <p className="text-slate-500 text-sm font-medium">O livro formatado aparecerá aqui</p>
+                    <p className="text-slate-600 text-xs mt-1">Cole seu texto, escolha o modo e clique em Formatar</p>
+                  </div>
+                )}
+
+                {isLoading && !htmlOutput && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                    <div className="flex gap-1">
+                      {[0, 1, 2].map(i => (
+                        <div key={i} className="w-2 h-2 bg-violet-500 rounded-full animate-bounce"
+                          style={{ animationDelay: `${i * 0.15}s` }} />
+                      ))}
+                    </div>
+                    <p className="text-slate-400 text-sm">Analisando e formatando o texto…</p>
+                  </div>
+                )}
+
+                {htmlOutput && (
+                  activeView === 'preview' ? (
+                    <iframe
+                      srcDoc={htmlOutput}
+                      className="w-full h-full border-0 bg-white"
+                      style={{ minHeight: '500px' }}
+                      sandbox="allow-same-origin"
+                      title="Prévia do livro"
+                    />
+                  ) : (
+                    <pre className="p-4 text-xs font-mono text-emerald-400 bg-slate-950 overflow-auto h-full whitespace-pre-wrap break-all" style={{ minHeight: '500px' }}>
+                      {htmlOutput}
+                    </pre>
+                  )
+                )}
+              </div>
+
+              {/* Output Footer Stats */}
+              <div className="px-4 py-2.5 border-t border-slate-800 flex items-center justify-between">
+                <div className="flex items-center gap-3 text-xs text-slate-500">
+                  <span>{htmlOutput.length.toLocaleString('pt-BR')} chars gerados</span>
+                  {htmlOutput && (
+                    <>
+                      <span>·</span>
+                      <span>~{outputPages} páginas estimadas</span>
+                    </>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                    mode === 'KDP'
+                      ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
+                      : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                  }`}>
+                    {mode === 'KDP' ? '📱 KDP' : '📖 ABNT'}
+                  </span>
+                  {isLoading && (
+                    <span className="text-xs text-violet-400 animate-pulse">● gerando</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   );
